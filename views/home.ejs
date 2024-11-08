@@ -17,7 +17,7 @@
     <div class="d-flex h-100 w-100">
       <div
         class="d-flex justify-content-center align-items-center w-20 shadow p-color me-5">
-        <button class="btn btn-primary h-10 w-75">BTN</button>
+        <button class="btn btn-primary h-10 w-75 m-3" draggable="true" ondragstart="dragStartHandler(event)" id="draggable">BTN</button>
       </div>
       <main class="w-100 h-100 p-color">
         <nav class="navbar navbar-expand-lg bg-body-tertiary w-100">
@@ -36,8 +36,11 @@
             </div>
           </div>
         </nav>
-        <div></div>
+        <div class="h-90 d-flex flex-column" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
+
+        </div>
       </main>
     </div>
+    <script src="/js/utils/dragAndDrop.js"></script>
   </body>
 </html>
