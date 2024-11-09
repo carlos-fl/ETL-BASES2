@@ -15,16 +15,27 @@ function getBlockNode(lastNode) {
 /**
  * 
  * @param {string} nodeName 
+ * @param {htmlElement} parentNode
  * @returns {htmlElement}
  */
-function findChildNodeInBlockNode(nodeName) {
-  let node = null
-  blockNode.childNodes.forEach(childNode => {
-    if (childNode.nodeName == nodeName)
-      node = childNode
-  })
-  return node
+function findChildNodeInBlockNode(nodeName, parentNode) {
+  let node = null;
+
+  parentNode.childNodes.forEach(childNode => {
+    if (childNode.nodeName == nodeName) {
+      node = childNode;
+    } else {
+      // Capture the result of the recursive call
+      const foundNode = findChildNodeInBlockNode(nodeName, childNode);
+      if (foundNode) {
+        node = foundNode;  // If a node is found, return it
+      }
+    }
+  });
+
+  return node;  // Return the node if found, otherwise null
 }
+
 
 // edit block name 
 function editDataFlowBlockName(htmlElement) {
@@ -40,7 +51,7 @@ function changeBlockNameOnSave() {
   if (newBlockName.trim() == '')
     editDataFlowBlockName()
 
-  const node = findChildNodeInBlockNode('H6')
+  const node = findChildNodeInBlockNode('H6', blockNode)
 
   node.innerHTML = newBlockName
   editDataFlowBlockName()
@@ -65,4 +76,21 @@ function goToDataFlowSection(node) {
   LocalStorage.setItem(localStorageBlockKey, node.id)
   const dataFlowSectionURL = 'http://localhost:8080/dataflow'
   location.replace(dataFlowSectionURL)
+}
+
+
+// getting blocks with priority order 
+function getBlocksInOrder() {
+  const controlFlowBlockList = [] 
+  const container = document.getElementById('data-flow-blocks-container')
+  const childNodes = container.childNodes
+
+  // save input values in array
+  childNodes.forEach(controlFlowBlock => {
+    const inputNode = findChildNodeInBlockNode('INPUT', controlFlowBlock)
+    const blockNode = getBlockNode(inputNode)
+    const data = { [inputNode.value]: blockNode.id }
+    controlFlowBlockList.push(data)
+  })
+  LocalStorage.setItem('blocksOrder', JSON.stringify(controlFlowBlockList))
 }

@@ -23,7 +23,9 @@ function dropHandler(ev, cb) {
     const clone = dragElement.cloneNode(true); // Clonar el elemento arrastrado
     clone.id = `${data}-clone-${new Date().getTime()}`; // Asignar un nuevo ID al clon
     // add event listener to clone
-    clone.addEventListener('dblclick', cb(clone))
+    clone.addEventListener('dblclick', function() {
+      cb(clone)
+    })
     ev.target.appendChild(clone); // Añadir el clon a la zona de destino
   } else {
     console.error(

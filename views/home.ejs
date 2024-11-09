@@ -20,9 +20,10 @@
         class="d-flex justify-content-center align-items-center w-20 shadow p-color me-5">
         <div class="d-flex justify-content-between align-items-center  btn btn-primary h-10 w-75 m-3" draggable="true" ondragstart="dragStartHandler(event)" id="draggable">
           <h6>Control flow task</h6>
-          <div>
+          <div class="d-flex align-items-center">
             <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
             <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
+            <input type="number" min="0" class="form-control ms-1">
           </div>
         </div>
       </div>
@@ -39,16 +40,15 @@
                 <li class="nav-item">
                   <a class="nav-link" href="#">Data Flow</a>
                 </li>
-                <li class="nav-item">
+                <li class="nav-item" onclick="getBlocksInOrder()">
                   <a class="nav-link" href="#">RUN</a>
                 </li>
               </ul>
             </div>
           </div>
         </nav>
-        <div class="h-90 d-flex flex-column" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="data-flow-blocks-container">
-          <!-- blocks goes in this div -->
-        </div>
+        <!-- blocks go in this div -->
+        <div class="h-90 d-flex flex-column" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="data-flow-blocks-container"></div>
         <!-- modal to change block name -->
         <div class="modal" tabindex="-1" id="edit-modal">
           <div class="modal-dialog">
