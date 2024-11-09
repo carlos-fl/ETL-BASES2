@@ -5,7 +5,13 @@ function dragOverHandler(ev) {
   ev.dataTransfer.dropEffect = "copy";
 }
 
-function dropHandler(ev) {
+/**
+ * 
+ * @param {Event} ev 
+ * @param {VoidFunction} cb 
+ * cb is a callback function
+ */
+function dropHandler(ev, cb) {
   ev.preventDefault();
 
   // Obtener el id del elemento arrastrado
@@ -16,6 +22,8 @@ function dropHandler(ev) {
   if (dragElement) {
     const clone = dragElement.cloneNode(true); // Clonar el elemento arrastrado
     clone.id = `${data}-clone-${new Date().getTime()}`; // Asignar un nuevo ID al clon
+    // add event listener to clone
+    clone.addEventListener('dblclick', cb(clone))
     ev.target.appendChild(clone); // Añadir el clon a la zona de destino
   } else {
     console.error(

@@ -11,13 +11,20 @@
     />
     <link rel="stylesheet" href="/css/home.css" />
     <link rel="stylesheet" href="/css/index.css" />
+    <script src="https://kit.fontawesome.com/6ed790b2ab.js" crossorigin="anonymous"></script>
     <title>HOME</title>
   </head>
   <body style="height: 100vh; width: 100vw; background-color: #f4f6ff">
     <div class="d-flex h-100 w-100">
       <div
         class="d-flex justify-content-center align-items-center w-20 shadow p-color me-5">
-        <button class="btn btn-primary h-10 w-75 m-3" draggable="true" ondragstart="dragStartHandler(event)" id="draggable">BTN</button>
+        <div class="d-flex justify-content-between align-items-center  btn btn-primary h-10 w-75 m-3" draggable="true" ondragstart="dragStartHandler(event)" id="draggable">
+          <h6>Control flow task</h6>
+          <div>
+            <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
+            <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
+          </div>
+        </div>
       </div>
       <main class="w-100 h-100 p-color">
         <nav class="navbar navbar-expand-lg bg-body-tertiary w-100">
@@ -32,15 +39,38 @@
                 <li class="nav-item">
                   <a class="nav-link" href="#">Data Flow</a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="#">RUN</a>
+                </li>
               </ul>
             </div>
           </div>
         </nav>
-        <div class="h-90 d-flex flex-column" ondrop="dropHandler(event)" ondragover="dragOverHandler(event)">
-
+        <div class="h-90 d-flex flex-column" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="data-flow-blocks-container">
+          <!-- blocks goes in this div -->
+        </div>
+        <!-- modal to change block name -->
+        <div class="modal" tabindex="-1" id="edit-modal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="btn-close" onclick="editDataFlowBlockName()" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <label>Cambia el nombre del bloque</label>
+                <input class="form-control" type="text" placeholder="Edit name" id="edit-input">
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="editDataFlowBlockName()">Close</button>
+                <button type="button" class="btn btn-primary" onclick="changeBlockNameOnSave()">Save changes</button>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
     <script src="/js/utils/dragAndDrop.js"></script>
+    <script src="/js/dataFlowController/home.js"></script>
   </body>
 </html>
