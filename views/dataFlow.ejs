@@ -17,7 +17,7 @@
 <body style="height: 100vh; width: 100vw; background-color: #f4f6ff">
     <div class="d-flex h-100 w-100">
 
-        <div class="d-flex flex-column justify-content-center align-items-center w-20 shadow p-color me-5 gap-4">
+        <div class="d-flex flex-column justify-content-center align-items-center w-20 shadow p-color me-5 gap-4" id="sideBar">
           <div class="d-flex justify-content-center align-items-center  btn btn-primary h-10 w-75 m-0 p-3 gap-2" draggable="true" ondragstart="dragStartHandler(event)" id="draggable-source">
             <h6 class="m-0" >OLE DB Source</h6>
             <div class="d-flex align-items-center d-none gap-3">
@@ -50,7 +50,7 @@
           <nav class="navbar navbar-expand-lg bg-body-tertiary w-100 mb-2">
             <div class="container-fluid">
               <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav">
+                <ul class="navbar-nav d-flex gap-3" id="navBarList">
                   <li class="nav-item">
                     <a class="nav-link" aria-current="page" href="/home"
                       >Control Flow</a

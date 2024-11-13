@@ -21,3 +21,47 @@
 .shadow {
   box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
 }
+
+
+#navBarList > li{
+  /* font-size: 1.5rem; */
+  position: relative !important;
+  width: max-content !important ;
+}
+
+#navBarList > li::after{
+  content: "" !important;
+  width: 0.5rem !important;
+  height: 5px !important;
+  border-radius: 0.5rem !important;
+  position: absolute !important ;
+  background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%) !important;
+  left: 0px !important;
+  top: 30px !important;
+  transition: width 0.3s ease 0.1s !important;
+}
+
+#navBarList > li:hover::after{
+  width: 100% !important;
+}
+
+#sideBar #draggable,
+#sideBar #draggable-source,
+#sideBar #draggable-conversion,
+#sideBar #draggable-destination {
+  transition: transform 0.1s  ease-in-out 0.1s !important;
+}
+
+#sideBar #draggable:hover,
+#sideBar #draggable-source:hover,
+#sideBar #draggable-conversion:hover,
+#sideBar #draggable-destination:hover {
+  transform: scale(1.03);
+  box-shadow: 0rem .5rem 1rem rgba(0,0,0, .15) !important;
+}
+
+#sideBar #draggable-source:hover,
+#sideBar #draggable-conversion:hover,
+#sideBar #draggable-destination:hover{
+  box-shadow: 0rem .5rem 1rem rgba(0,0,0, .15) !important;
+}
