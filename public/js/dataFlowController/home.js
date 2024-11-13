@@ -94,3 +94,10 @@ function getBlocksInOrder() {
   })
   LocalStorage.setItem('blocksOrder', JSON.stringify(controlFlowBlockList))
 }
+
+document.addEventListener('keyup', (event) => { 
+  const editModal = document.querySelector('#edit-modal');
+  (event.key === "Enter" && editModal.classList.contains('block')) ? changeBlockNameOnSave() : null; 
+});
+
+
