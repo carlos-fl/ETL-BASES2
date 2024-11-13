@@ -26,7 +26,19 @@ function dropHandler(ev, cb) {
     clone.addEventListener('dblclick', function() {
       cb(clone)
     })
-    ev.target.appendChild(clone); // Añadir el clon a la zona de destino
+    // agrega clases para mostrar botones, sombra y layout
+    const iconContainer = clone.querySelector('.d-none');
+    iconContainer.classList.remove('d-none');
+    iconContainer.classList.add('d-block');
+    clone.classList.remove('justify-content-center');
+    clone.classList.add('justify-content-between');
+    clone.classList.add('shadow');
+    // quita los handlers del elemento clonado
+    clone.removeEventListener('dragStart', dragStartHandler);
+    //evita que se clone encima dentro de elementos del mismo tipo
+    if (ev.target.id === 'data-flow-blocks-container'){
+      ev.target.appendChild(clone); // Añadir el clon a la zona de destino
+    }
   } else {
     console.error(
       "No se pudo obtener el elemento arrastrado o el target no es la zona de destino."

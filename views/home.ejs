@@ -16,14 +16,14 @@
   </head>
   <body style="height: 100vh; width: 100vw; background-color: #f4f6ff">
     <div class="d-flex h-100 w-100">
-      <div
-        class="d-flex justify-content-center align-items-center w-20 shadow p-color me-5">
-        <div class="d-flex justify-content-between align-items-center  btn btn-primary h-10 w-75 m-3" draggable="true" ondragstart="dragStartHandler(event)" id="draggable">
-          <h6>Control flow task</h6>
-          <div class="d-flex align-items-center">
+      
+      <div class="d-flex flex-column justify-content-center align-items-center w-20 shadow p-color me-5 gap-4" id="sideBar">
+        <div class="d-flex justify-content-center align-items-center  btn btn-primary h-10 w-75 m-0 p-3 gap-2" draggable="true" ondragstart="dragStartHandler(event)" id="draggable">
+          <h6 class="m-0" >Control flow task</h6>
+          <div class="d-flex align-items-center d-none gap-3">
             <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
             <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
-            <input type="number" min="0" class="form-control ms-1">
+            <input type="number" min="0" class="form-control">
           </div>
         </div>
       </div>
@@ -31,35 +31,35 @@
         <nav class="navbar navbar-expand-lg bg-body-tertiary w-100">
           <div class="container-fluid">
             <div class="collapse navbar-collapse" id="navbarNav">
-              <ul class="navbar-nav">
+              <ul class="navbar-nav d-flex gap-3" id="navBarList">
                 <li class="nav-item">
                   <a class="nav-link active" aria-current="page" href="#"
                     >Control Flow</a
                   >
                 </li>
                 <li class="nav-item">
-                  <a class="nav-link" href="#">Data Flow</a>
+                  <a class="nav-link" href="/dataFlow">Data Flow</a>
                 </li>
                 <li class="nav-item" onclick="getBlocksInOrder()">
-                  <a class="nav-link" href="#">RUN</a>
+                  <a class="nav-link" href="/run">RUN</a>
                 </li>
               </ul>
             </div>
           </div>
         </nav>
         <!-- blocks go in this div -->
-        <div class="h-90 d-flex flex-column" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="data-flow-blocks-container"></div>
+        <div class="h-90 d-flex flex-column gap-4 overflow-y-scroll" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="data-flow-blocks-container"></div>
         <!-- modal to change block name -->
         <div class="modal" tabindex="-1" id="edit-modal">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
-                <h5 class="modal-title">Modal title</h5>
+                <h5 class="modal-title">Edición de Bloque</h5>
                 <button type="button" class="btn-close" onclick="editDataFlowBlockName()" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                 <label>Cambia el nombre del bloque</label>
-                <input class="form-control" type="text" placeholder="Edit name" id="edit-input">
+                <input class="form-control" type="text" placeholder="Edit name" id="edit-input" maxlength=35>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="editDataFlowBlockName()">Close</button>
