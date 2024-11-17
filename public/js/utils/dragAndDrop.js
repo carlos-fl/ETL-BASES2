@@ -24,7 +24,7 @@ function dropHandler(ev, cb) {
     clone.id = `${data}-clone-${new Date().getTime()}`; // Asignar un nuevo ID al clon
     // add event listener to clone
     clone.addEventListener('dblclick', function() {
-      cb(clone)
+      cb(clone, dragElement.id)
     })
     // agrega clases para mostrar botones, sombra y layout
     const iconContainer = clone.querySelector('.d-none');

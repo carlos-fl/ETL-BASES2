@@ -68,9 +68,38 @@
             </div>
           </div>
         </div>
+
+        <!-- for data conversion modal -->
+        <div>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Column</th>
+                <th>Output alias</th>
+                <th>Data type</th>
+                <th>Length</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>name</td>
+                <td>copy of name</td>
+                <td>varchar</td>
+                <td>32</td>
+                <td>
+                  <select>
+                    <option value="">Capitalize</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
       </main>
     </div>
     <script src="/js/utils/dragAndDrop.js"></script>
-    <script src="/js/dataFlowController/home.js"></script>
+    <script src="/js/controlFlowController/home.js"></script>
   </body>
 </html>
