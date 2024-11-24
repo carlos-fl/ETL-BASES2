@@ -122,7 +122,8 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   
                   <label for="methodSelection"  >Escoge un método: </label>
                   <select id="methodSelection" name="method" >
-                    <option value="table" selected >Tabla</option>
+                    <option value="">Elige una opcion</option>
+                    <option value="table" >Tabla</option>
                     <option value="sqlCommand" >SQL Command</option>
                   </select>
                   <br>

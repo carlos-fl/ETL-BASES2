@@ -31,7 +31,33 @@ export class DataFlow {
         }
     }
 
+    static parseSQLQuery(sqlCommand){
+        const result = {
+            tableName: null,
+            fields: [],
+            joinedTables: []
+        };
+        const fieldsRegex = /SELECT\s+(.*?)\s+FROM/i;
+        const fieldsMatch = sqlCommand.match(fieldsRegex);
+        if (fieldsMatch && fieldsMatch[1]){
+            result.fields = fieldsMatch[1].split(",").map((field) => field.trim());
+        }
 
+        const fromRegex = /FROM\s+([^\s;]+)/i;
+        const fromMatch = query.match(fromRegex);
+        if (fromMatch && fromMatch[1]) {
+            result.tableName = fromMatch[1].trim();
+        }
+
+        const joinRegex = /JOIN\s+([^\s]+)\s+/gi;
+        let joinMatch;
+        while ((joinMatch = joinRegex.exec(query)) !== null) {
+            result.joinedTables.push(joinMatch[1].trim());
+        }
+
+        return result;
+
+    }
 
     static async connection(req,res){
         try {
@@ -41,7 +67,10 @@ export class DataFlow {
                 queryResult = await DataFlow.getTableMetadata(table);
                 res.status(200).json({message: `Informacion de la tabla ${table}`, testQueryResult: queryResult});
             }else{
-                queryResult = await connectionPool.request().query(sqlCommand);
+                // invocar funcion para extraer campos y tablas del sqlCommand
+                let queryTables = DataFlow.parseSQLQuery(sqlCommand);
+                // extraer la metadata de cada tabla
+                queryResult = await DataFlow.getTableMetadata(queryTables);
                 res.status(200).json({message: 'conexion exitosa', testQueryResult: queryResult});
             }
         } catch (error) {
