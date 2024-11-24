@@ -22,6 +22,7 @@ export class DataFlow {
 
     static async getTableMetadata(tableName){
         try {
+            console.log('------------------------------------ ', connectionPool)
             let result = await connectionPool.request().query(`EXEC SP_get_table_metadata '${tableName}';`);
             let formatedData = this.format_metadata(result.recordset);
             return formatedData;

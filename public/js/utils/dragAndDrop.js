@@ -22,17 +22,21 @@ function dropHandler(ev, cb) {
   if (dragElement) {
     const clone = dragElement.cloneNode(true); // Clonar el elemento arrastrado
     clone.id = `${data}-clone-${new Date().getTime()}`; // Asignar un nuevo ID al clon
-    // add event listener to clone
-    clone.addEventListener("dblclick", function () {
-      cb(clone, dragElement.id);
-    });
+
     // agrega clases para mostrar botones, sombra y layout
     const iconContainer = clone.querySelector(".d-none");
     if (dragElement.id != "ETL") {
+      // add event listener to clone only if it is not ETL container block
+      clone.addEventListener("dblclick", function () {
+        cb(clone, dragElement.id);
+      });
+
       iconContainer.classList.remove("d-none");
       iconContainer.classList.add("d-block");
       clone.classList.remove("h-10");
+      clone.classList.remove("w-75");
       clone.classList.add('h-25')
+      clone.classList.add('w-100')
       clone.classList.remove("justify-content-center");
       clone.classList.remove("btn-primary");
       clone.classList.add("btn-secondary");
@@ -66,27 +70,4 @@ function dragStartHandler(ev) {
   // Add the target element's id to the data transfer object
   ev.dataTransfer.setData("application/my-app", ev.target.id);
   ev.dataTransfer.effectAllowed = "copy";
-}
-
-function dropHandlerCn(ev) {
-  ev.preventDefault();
-
-  // Obtener el id del elemento arrastrado
-  const data = ev.dataTransfer.getData("application/my-app");
-  const dragElement = document.getElementById(data);
-
-  // Verificar que el elemento arrastrado exista antes de clonar
-  if (dragElement) {
-    const clone = dragElement.cloneNode(true); // Clonar el elemento arrastrado
-    clone.id = `${data}-clone-${new Date().getTime()}`; // Asignar un nuevo ID al clon
-    // agrega clases para mostrar botones, sombra y layout
-    clone.classList.remove("h-10");
-    clone.classList.remove("w-75");
-    clone.classList.add("h-40");
-    clone.classList.add("w-40");
-    // quita los handlers del elemento clonado
-    clone.removeEventListener("dragStart", dragStartHandler);
-    //evita que se clone encima dentro de elementos del mismo tipo
-    ev.target.appendChild(clone); // Añadir el clon a la zona de destino
-  }
 }

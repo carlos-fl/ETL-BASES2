@@ -133,7 +133,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   </select>
 
                   <label id="sqlCommandLabel" for="sqlCommandInput" style="display:none" >Comando SQL</label>
-                  <textarea name="sqlCommand" id="sqlCommandInput"   placeholder="SELECT * FROM users;" rows="10" cols="45" style="display:none"></textarea>
+                  <textarea name="sqlCommand" id="sqlCommandInput"   placeholder="SELECT * FROM users;" rows="10" cols="45" style="display:none; min-height: 80px"></textarea>
                 </div>
                 <div class="modal-footer">
                   <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
