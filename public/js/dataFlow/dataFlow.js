@@ -22,7 +22,7 @@ function extractData() {
 
 
 async function dbConnection() {
-  const formData = extractData();
+  var formData = extractData();
 
   try {
     const response = await fetch("/connect", {
@@ -33,6 +33,20 @@ async function dbConnection() {
       body: JSON.stringify(formData),
     });
     const result = await response.json();
+    let ETLObject = JSON.parse(window.localStorage.getItem('currentETL')); //obtiene el objeto del ETL actual
+    ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
+    ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
+    let controlFlowInfo = JSON.parse(window.localStorage.getItem('controlBlocks')); // obtiene el objeto de controlFLow
+    // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
+    let currentControlBlockId = window.localStorage.getItem('controlBlockId');
+    for (let object of controlFlowInfo){
+      if (object.id===currentControlBlockId){
+        object.etls.push(ETLObject);
+      }
+    }
+    // controlFlowInfo.etls.push(ETLObject); // le acopla el objeto del ETL con la informacion nueva
+    window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowInfo)); // vuelve a guardar el objeto de controlFlow con la nueva informacion
+    
     toggleModal(this); //cierra la modal de formulario de conexion
     notificationModal.querySelector(".modal-body").innerText = result.message; // escribe el mensaje de respuesta en el cuerpo de la modal
     console.log(result.testQueryResult.source);
@@ -224,6 +238,11 @@ function toggleModal(target, typeOfBlockDraggedId) {
     //     console.log(target.id);
     //     getModalInfo(target);
     // }
+    let ETLObject = {
+      etlID: target.parentNode.id,
+    }
+    console.log(ETLObject)
+    window.localStorage.setItem('currentETL', JSON.stringify(ETLObject)); //almacena un objeto de ETL solo con el id del Padre
     formModal.classList.add("show");
     formModal.style.display = "block";
   }
