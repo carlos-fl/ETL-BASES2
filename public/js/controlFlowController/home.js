@@ -62,6 +62,13 @@ function changeBlockNameOnSave() {
  * @param {htmlElement} node 
  */
 function deleteDataFlowBlock(node) {
+  // delete node from localstorage
+  const controlFlowBlocks = JSON.parse(window.localStorage.getItem('controlBlocks'))
+  const indexOfBlock = controlFlowBlocks.findIndex(block => block.id == node.id)
+
+  controlFlowBlocks.splice(indexOfBlock, 1)
+  window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowBlocks))
+
   const blockNode = getBlockNode(node)
   blockNode.remove()
 }
@@ -71,9 +78,37 @@ function deleteDataFlowBlock(node) {
  * @param {htmlElement} node 
  */
 function goToDataFlowSection(node) {
+  // save controlFlow block
+  if (LocalStorage.getItem('controlBlocks') == null)
+    LocalStorage.setItem('controlBlocks', JSON.stringify([]))
+
+
+
+  const inputNode = findChildNodeInBlockNode('INPUT', node)
+
+  const controlFlowBlockInfo = {
+    id: node.id,
+    name: node.textContent.trim(),
+    order: inputNode.value == '' ? -1 : parseInt(inputNode.value),
+    etls: []
+  }
+
+  const controlBlocks = JSON.parse(LocalStorage.getItem('controlBlocks'))
+  if (controlBlocks.find(block => block.id == node.id)) {
+    indexOfRepitedElement = controlBlocks.findIndex(block => block.id == node.id)
+    controlBlocks.splice(indexOfRepitedElement, 1)
+  }
+  
+  controlBlocks.push(controlFlowBlockInfo)
+
+  LocalStorage.setItem('controlBlocks', JSON.stringify(controlBlocks))
+
+  // save id of current block selected
   const localStorageBlockKey = 'controlBlockId'
-  // save id of block selected
   LocalStorage.setItem(localStorageBlockKey, node.id)
+
+  
+
   const dataFlowSectionURL = 'http://localhost:8080/dataflow'
   location.replace(dataFlowSectionURL)
 }
@@ -99,3 +134,38 @@ document.addEventListener('keyup', (event) => {
   const editModal = document.querySelector('#edit-modal');
   (event.key === "Enter" && editModal.classList.contains('block')) ? changeBlockNameOnSave() : null; 
 });
+
+
+// renderizar componentes existentes
+
+function renderControlFlowBlocks() {
+  const controlFlowBlocks = JSON.parse(window.localStorage.getItem('controlBlocks'));
+  const controlFlowBlocksContainer = document.getElementById('control-flow-blocks-container');
+
+  controlFlowBlocksContainer.innerHTML = '';
+  controlFlowBlocks.forEach(block => {
+    // Crear el bloque HTML sin eventos inline
+    const blockElement = document.createElement('div');
+    blockElement.className = 'd-flex justify-content-between shadow align-items-center btn btn-secondary h-25 w-100 m-0 p-3 gap-2';
+    blockElement.id = block.id;
+
+    // Añadir contenido HTML al bloque
+    blockElement.innerHTML = `
+      <h6 class="m-0">${block.name}</h6>
+      <div class="d-flex align-items-center gap-3">
+        <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
+        <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
+        <input type="number" min="0" value="${block.order}" class="form-control">
+      </div>
+    `;
+
+    // Agregar el evento 'ondblclick' al bloque
+    blockElement.addEventListener('dblclick', () => goToDataFlowSection(blockElement));
+
+    // Añadir el bloque al contenedor
+    controlFlowBlocksContainer.appendChild(blockElement);
+  });
+}
+
+
+renderControlFlowBlocks()

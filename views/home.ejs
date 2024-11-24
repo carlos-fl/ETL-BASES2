@@ -48,7 +48,7 @@
           </div>
         </nav>
         <!-- blocks go in this div -->
-        <div class="h-90 d-flex flex-column gap-4 overflow-y-scroll" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="data-flow-blocks-container"></div>
+        <div class="h-90 d-flex flex-column gap-4 overflow-y-scroll" ondrop="dropHandler(event, goToDataFlowSection)" ondragover="dragOverHandler(event)" id="control-flow-blocks-container"></div>
         <!-- modal to change block name -->
         <div class="modal" tabindex="-1" id="edit-modal">
           <div class="modal-dialog">
@@ -68,35 +68,6 @@
             </div>
           </div>
         </div>
-
-        <!-- for data conversion modal -->
-        <div>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Column</th>
-                <th>Output alias</th>
-                <th>Data type</th>
-                <th>Length</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>name</td>
-                <td>copy of name</td>
-                <td>varchar</td>
-                <td>32</td>
-                <td>
-                  <select>
-                    <option value="">Capitalize</option>
-                  </select>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
       </main>
     </div>
     <script src="/js/utils/dragAndDrop.js"></script>
