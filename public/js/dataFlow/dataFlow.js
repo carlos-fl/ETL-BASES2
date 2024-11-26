@@ -13,13 +13,11 @@ function extractData() {
     user: formModal.querySelector("#userName").value,
     password: formModal.querySelector("#userPassword").value,
     sqlCommand: formModal.querySelector("#sqlCommandInput").value,
-    table: formModal.querySelector('#tableNameSelect').value,
-    method: formModal.querySelector('#methodSelection').value,
+    table: formModal.querySelector("#tableNameSelect").value,
+    method: formModal.querySelector("#methodSelection").value,
   };
   return data;
 }
-
-
 
 async function dbConnection() {
   var formData = extractData();
@@ -33,31 +31,39 @@ async function dbConnection() {
       body: JSON.stringify(formData),
     });
     const result = await response.json();
-    let ETLObject = JSON.parse(window.localStorage.getItem('currentETL')); //obtiene el objeto del ETL actual
+    let ETLObject = JSON.parse(window.localStorage.getItem("currentETL")); //obtiene el objeto del ETL actual
     ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
     ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
-    let controlFlowInfo = JSON.parse(window.localStorage.getItem('controlBlocks')); // obtiene el objeto de controlFLow
+    let controlFlowInfo = JSON.parse(
+      window.localStorage.getItem("controlBlocks")
+    ); // obtiene el objeto de controlFLow
     // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
-    let currentControlBlockId = window.localStorage.getItem('controlBlockId');
-    for (let object of controlFlowInfo){
-      if (object.id===currentControlBlockId){
+    let currentControlBlockId = window.localStorage.getItem("controlBlockId");
+    for (let object of controlFlowInfo) {
+      if (object.id === currentControlBlockId) {
         object.etls.push(ETLObject);
       }
     }
     // controlFlowInfo.etls.push(ETLObject); // le acopla el objeto del ETL con la informacion nueva
-    window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowInfo)); // vuelve a guardar el objeto de controlFlow con la nueva informacion
-    
+    window.localStorage.setItem(
+      "controlBlocks",
+      JSON.stringify(controlFlowInfo)
+    ); // vuelve a guardar el objeto de controlFlow con la nueva informacion
+
     toggleModal(this); //cierra la modal de formulario de conexion
     notificationModal.querySelector(".modal-body").innerText = result.message; // escribe el mensaje de respuesta en el cuerpo de la modal
     console.log(result.testQueryResult.source);
-    window.localStorage.setItem("source", JSON.stringify(result.testQueryResult.source));
+    window.localStorage.setItem(
+      "source",
+      JSON.stringify(result.testQueryResult.source)
+    );
     toggleNotificationModal(); // abre la modal de notificaciones y muestra mensaje
   } catch (error) {
     console.log(error);
   }
 }
 
-async function extractTableNames(){
+async function extractTableNames() {
   const formData = extractData();
   try {
     const response = await fetch("/tableNames", {
@@ -74,40 +80,32 @@ async function extractTableNames(){
   }
 }
 
-
-
-
 async function checkSelectValue() {
-  if (this.value==='sqlCommand'){
-        formModal.querySelector('#tableNameLabel').style.display='none'
-    formModal.querySelector('#tableNameSelect').style.display='none'
-    formModal.querySelector('#sqlCommandLabel').style.display="block";
-    formModal.querySelector('#sqlCommandInput').style.display="block";
-    console.log("sqlCommand value!")
+  if (this.value === "sqlCommand") {
+    formModal.querySelector("#tableNameLabel").style.display = "none";
+    formModal.querySelector("#tableNameSelect").style.display = "none";
+    formModal.querySelector("#sqlCommandLabel").style.display = "block";
+    formModal.querySelector("#sqlCommandInput").style.display = "block";
+    console.log("sqlCommand value!");
   }
-  
-  if (this.value==='table'){
 
+  if (this.value === "table") {
     const queryResult = await extractTableNames();
 
     console.log(queryResult);
-    for (let table of queryResult.recordset){
-      let tableOption = document.createElement('option');
-      tableOption.value=table.table_name;
-      tableOption.innerText=table.table_name;
-      formModal.querySelector('#tableNameSelect').appendChild(tableOption);
+    for (let table of queryResult.recordset) {
+      let tableOption = document.createElement("option");
+      tableOption.value = table.table_name;
+      tableOption.innerText = table.table_name;
+      formModal.querySelector("#tableNameSelect").appendChild(tableOption);
     }
-    formModal.querySelector('#sqlCommandLabel').style.display="none";
-    formModal.querySelector('#sqlCommandInput').style.display="none";
-    formModal.querySelector('#tableNameLabel').style.display='block'
-    formModal.querySelector('#tableNameSelect').style.display='block'
-    console.log("table value!")
+    formModal.querySelector("#sqlCommandLabel").style.display = "none";
+    formModal.querySelector("#sqlCommandInput").style.display = "none";
+    formModal.querySelector("#tableNameLabel").style.display = "block";
+    formModal.querySelector("#tableNameSelect").style.display = "block";
+    console.log("table value!");
   }
 }
-
-
-
-
 
 /**
  *
@@ -116,7 +114,7 @@ async function checkSelectValue() {
  */
 function setModalHtmlContent(typeOfBlockDraggedId) {
   const modalContentDiv = formModal.childNodes[1].childNodes[1];
-  if (typeOfBlockDraggedId == "draggable-source") {
+  if (typeOfBlockDraggedId == "source") {
     modalContentDiv.innerHTML = `<div class="modal-header">
                   <h5 class="modal-title">Conexión</h5>
                   <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
@@ -153,14 +151,15 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                 <div class="modal-footer">
                   <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
                 </div>`;
-                formModal.querySelector('#methodSelection')
-                .addEventListener('change', checkSelectValue);
+    formModal
+      .querySelector("#methodSelection")
+      .addEventListener("change", checkSelectValue);
   }
-  if (typeOfBlockDraggedId == "draggable-conversion") {
-    const dataFromSourceOLEDB = LocalStorage.getItem('source')
-    
+  if (typeOfBlockDraggedId == "conversion") {
+    const dataFromSourceOLEDB = LocalStorage.getItem("source");
+
     if (!dataFromSourceOLEDB) {
-        modalContentDiv.innerHTML = `<div class="modal-header">
+      modalContentDiv.innerHTML = `<div class="modal-header">
                   <h5 class="modal-title">Conexión</h5>
                   <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
                 </div>
@@ -170,9 +169,8 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                 <div class="modal-footer">
                   <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
                 </div>`;
- 
     } else {
-        modalContentDiv.innerHTML = `<div class="modal-header">
+      modalContentDiv.innerHTML = `<div class="modal-header">
                       <h5 class="modal-title">Data conversion</h5>
                       <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
                     </div>
@@ -207,8 +205,8 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                       <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
                     </div>`;
 
-        // TODO: iterate through every column from source oledb
-        const tableBody = document.getElementById('tbody')
+      // TODO: iterate through every column from source oledb
+      const tableBody = document.getElementById("tbody");
     }
   }
   if (typeOfBlockDraggedId == "draggable-destination") {
@@ -240,9 +238,9 @@ function toggleModal(target, typeOfBlockDraggedId) {
     // }
     let ETLObject = {
       etlID: target.parentNode.id,
-    }
-    console.log(ETLObject)
-    window.localStorage.setItem('currentETL', JSON.stringify(ETLObject)); //almacena un objeto de ETL solo con el id del Padre
+    };
+    console.log(ETLObject);
+    window.localStorage.setItem("currentETL", JSON.stringify(ETLObject)); //almacena un objeto de ETL solo con el id del Padre
     formModal.classList.add("show");
     formModal.style.display = "block";
   }
@@ -270,7 +268,79 @@ function getNotificationModalInfo(result) {
   notificationModal.querySelector(".modal-body").innerHTML = ``;
 }
 
+// RENDER EXISTING ETLS
+
+function renderEtls() {
+  if (!window.location.pathname.includes("dataflow")) return;
+
+  const currentControlFlowBlockId = window.localStorage.getItem("controlBlockId");
+  if (!currentControlFlowBlockId) return;
+
+  // get controlBlock elements(array)
+  const controlBlocks = JSON.parse(window.localStorage.getItem("controlBlocks"));
+  const currentControlBlock = controlBlocks.find(block => block.id == currentControlFlowBlockId);
+
+  // get etls from current control flow
+  const etls = currentControlBlock.etls;
+  const etlsContainer = document.getElementById("data-flow-blocks-container");
+  etlsContainer.innerHTML = "";
+
+  // list to save each source/conversion/destination block
+  const etlBlocks = [];
+  etls.forEach((etl) => {
+    etlsContainer.innerHTML += `<div class="d-flex flex-column justify-content-between align-items-center btn btn-primary h-40 w-40 m-0 p-4" draggable="true" ondragstart="dragStartHandler(event)" id=${etl.etlID}>
+          <h6 class="m-0" id="ETL-title">ETL</h6>
+          <div class="d-flex align-items-center d-block gap-3">
+            <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
+            <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
+          </div>
+        </div>`;
+
+    // append children
+    const containerKeys = Object.keys(etl);
+    const etlActions = [];
+    for (const key of containerKeys) {
+      if (key == "source" || key == "conversion" || key == "destination") etlActions.push(key);
+    }
+
+    const etlContainer = document.getElementById(etl.etlID);
+    etlActions.forEach((action) => {
+      // Create the HTML block without inline events
+      const blockElement = document.createElement("div");
+      blockElement.className = "d-flex justify-content-between shadow align-items-center btn btn-secondary h-25 w-100 m-0 p-3 gap-2";
+      blockElement.id = `${action}-clone-${new Date().getTime()}`;
+
+      // Add HTML content to the block
+      blockElement.innerHTML = `
+        <h6 class="m-0">${action}</h6>
+        <div class="d-flex align-items-center gap-3">
+          <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
+          <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
+          <input type="number" min="0" value="-1" class="form-control">
+        </div>
+      `;
+
+      console.log("ADDED EVENT LISTENER TO: ", blockElement.id);
+      console.log("ID action: ", blockElement.id);
+      console.log("ETL: ", etl.etlID);
+
+      // Add the block to the container
+      etlContainer.appendChild(blockElement);
+
+      const obj = { block: blockElement, action };
+      etlBlocks.push(obj);
+    });
+  });
+  // brings etl children blocks to add the event listener
+  etlBlocks.forEach((obj) => {
+    const a = document.getElementById(obj.block.id);
+    if (a) { 
+      a.addEventListener('dblclick', () => {
+        toggleModal(obj.block, obj.action);
+      });
+    }
+  });
+}
 
 
-
-
+renderEtls();

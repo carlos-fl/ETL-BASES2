@@ -63,13 +63,23 @@ function changeBlockNameOnSave() {
  */
 function deleteDataFlowBlock(node) {
   // delete node from localstorage
+  
   const controlFlowBlocks = JSON.parse(window.localStorage.getItem('controlBlocks'))
-  const indexOfBlock = controlFlowBlocks.findIndex(block => block.id == node.id)
-
-  controlFlowBlocks.splice(indexOfBlock, 1)
-  window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowBlocks))
-
+  const currentControlFlowBlock = window.localStorage.getItem('controlBlockId')
+  const indexOfBlock = controlFlowBlocks.findIndex(block => block.id == currentControlFlowBlock)
   const blockNode = getBlockNode(node)
+  console.log(blockNode.id)
+
+  if (blockNode.id.includes('draggable')) {
+    controlFlowBlocks.splice(indexOfBlock, 1)
+    window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowBlocks))
+  } else if (blockNode.id.includes('ETL')) {
+    controlBlockEtls = controlFlowBlocks[indexOfBlock].etls
+    indexOfEtlToDelete = controlBlockEtls.findIndex(block => block.etlID == blockNode.id)
+    console.log(indexOfEtlToDelete, controlBlockEtls[indexOfEtlToDelete])
+    controlBlockEtls.splice(indexOfEtlToDelete, 1)
+    window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowBlocks))
+  }
   blockNode.remove()
 }
 
@@ -79,7 +89,7 @@ function deleteDataFlowBlock(node) {
  */
 function goToDataFlowSection(node) {
   // save controlFlow block
-  if (LocalStorage.getItem('controlBlocks') == null)
+  if (!LocalStorage.getItem('controlBlocks'))
     LocalStorage.setItem('controlBlocks', JSON.stringify([]))
 
 
@@ -94,14 +104,12 @@ function goToDataFlowSection(node) {
   }
 
   const controlBlocks = JSON.parse(LocalStorage.getItem('controlBlocks'))
-  if (controlBlocks.find(block => block.id == node.id)) {
-    indexOfRepitedElement = controlBlocks.findIndex(block => block.id == node.id)
-    controlBlocks.splice(indexOfRepitedElement, 1)
+  if (!controlBlocks.find(block => block.id == node.id)) {
+    controlBlocks.push(controlFlowBlockInfo)
+    LocalStorage.setItem('controlBlocks', JSON.stringify(controlBlocks))
   }
   
-  controlBlocks.push(controlFlowBlockInfo)
 
-  LocalStorage.setItem('controlBlocks', JSON.stringify(controlBlocks))
 
   // save id of current block selected
   const localStorageBlockKey = 'controlBlockId'

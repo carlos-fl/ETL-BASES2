@@ -59,6 +59,7 @@ function dropHandler(ev, cb) {
       clone.classList.add('d-flex')
       clone.classList.add('flex-column')
       clone.classList.add('justify-content-between')
+
       if (ev.target.id == 'data-flow-blocks-container') 
         ev.target.appendChild(clone)
     }
