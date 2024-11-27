@@ -147,6 +147,9 @@ document.addEventListener('keyup', (event) => {
 // renderizar componentes existentes
 
 function renderControlFlowBlocks() {
+  if (!window.location.pathname.includes('home'))
+    return
+
   const controlFlowBlocks = JSON.parse(window.localStorage.getItem('controlBlocks'));
   const controlFlowBlocksContainer = document.getElementById('control-flow-blocks-container');
 

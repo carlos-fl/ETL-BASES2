@@ -316,13 +316,8 @@ function renderEtls() {
         <div class="d-flex align-items-center gap-3">
           <i class="fa-regular fa-pen-to-square" onclick="editDataFlowBlockName(this)"></i>
           <i class="fa-solid fa-trash c-danger" onclick="deleteDataFlowBlock(this)"></i>
-          <input type="number" min="0" value="-1" class="form-control">
         </div>
       `;
-
-      console.log("ADDED EVENT LISTENER TO: ", blockElement.id);
-      console.log("ID action: ", blockElement.id);
-      console.log("ETL: ", etl.etlID);
 
       // Add the block to the container
       etlContainer.appendChild(blockElement);
@@ -344,3 +339,51 @@ function renderEtls() {
 
 
 renderEtls();
+
+/*
+
+{
+  bloqueID: id,
+  etls: [obj]
+}
+
+obj = {
+  etlID: id,
+  connectionParams: objParams,
+  source: {id_nombretabla, col1, col2},
+  conversion: {id_nombretabla, }
+}
+
+-------------------------------
+columna   tipo  length  action
+
+col1     VarChar 20      select: minuscula, mayuscula, concatenar, otro
+col2      VarChar 30      select: ----
+-------------------------------
+
+conversion: {
+  col1: {
+    action: "select lower(col1) from tabla"
+  },
+  col2: {
+    action: "select lower(col1) from tabla"
+  }
+}
+
+destination: {
+  etlID: id,
+  tabla: tabla_name,
+  query: select lower(col1), upper(col2) from tablaOrigen
+  destinoTable: nombreTabla
+}
+
+const etls = controlBlocks.find(block => block.id == currentBlock).etls
+etls.forEach(etl => {
+  const conversionObj = etl.conversion
+  Object.keys(converionObj).forEach(obj => {
+    if(obj.includes('col')) {
+
+    }
+  })
+})
+*/
