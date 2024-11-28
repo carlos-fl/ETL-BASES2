@@ -513,7 +513,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
                 </div>`;
   }
-
+}
 
 
 //modal para selecciona el otro campo con el que se va ha concatenar 
@@ -597,7 +597,6 @@ function getOperationOptions(dataType) {
     
     return `
       <option value="null"> -------- </option>
-      <option value="capitalize">Capitalize</option>
       <option value="uppercase">Uppercase</option>
       <option value="lowercase">Lowercase</option>
       <option value="concat">Concatenate</option>
@@ -623,7 +622,7 @@ function getOperationOptions(dataType) {
   return '';  // Devolver vacío si no hay operaciones válidas
 }
 
-}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
