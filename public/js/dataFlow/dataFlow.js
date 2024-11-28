@@ -32,6 +32,7 @@ async function dbConnection() {
     });
     const result = await response.json();
     let ETLObject = JSON.parse(window.localStorage.getItem("currentETL")); //obtiene el objeto del ETL actual
+    console.log('RESPONSE: ', result )
     ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
     ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
     let controlFlowInfo = JSON.parse(
