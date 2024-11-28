@@ -32,7 +32,6 @@ async function dbConnection() {
     });
     const result = await response.json();
     let ETLObject = JSON.parse(window.localStorage.getItem("currentETL")); //obtiene el objeto del ETL actual
-    console.log(result.testQueryResult.source)
     ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
     ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
     let controlFlowInfo = JSON.parse(
@@ -228,7 +227,6 @@ function toggleModal(target, typeOfBlockDraggedId) {
   setModalHtmlContent(typeOfBlockDraggedId);
 
   if (formModal.classList.contains("show")) {
-    console.log('modal clicked')
     formModal.classList.remove("show");
     formModal.style.display = "none";
   } else {
@@ -342,50 +340,120 @@ function renderEtls() {
 
 renderEtls();
 
-/*
+//sammy
+//modal de configuración del destino
+function openDestinationModal(destinationBlock) {
+  const modalContentDiv = formModal.querySelector(".modal-content");
 
-{
-  bloqueID: id,
-  etls: [obj]
-}
-
-obj = {
-  etlID: id,
-  connectionParams: objParams,
-  source: {id_nombretabla, col1, col2},
-  conversion: {id_nombretabla, }
-}
-
--------------------------------
-columna   tipo  length  action
-
-col1     VarChar 20      select: minuscula, mayuscula, concatenar, otro
-col2      VarChar 30      select: ----
--------------------------------
-
-conversion: {
-  col1: {
-    action: "select lower(col1) from tabla"
-  },
-  col2: {
-    action: "select lower(col1) from tabla"
+  //columnas del origen desde localStorage
+  const sourceData = JSON.parse(localStorage.getItem("source"));
+  if (!sourceData) {
+    alert("No se encontraron datos de origen. Conéctate primero a una tabla.");
+    return;
   }
+
+  //tabla dinámica con las columnas y acciones
+  let tableRows = "";
+  for (const [columnName, columnInfo] of Object.entries(sourceData)) {
+    tableRows += `
+      <tr>
+        <td>${columnName}</td>
+        <td>${columnInfo.dataType || "N/A"}</td>
+        <td>${columnInfo.length ?? "-"}</td>
+        <td>
+          <select class="form-select" data-column="${columnName}">
+            <option value="">Selecciona una acción</option>
+            <option value="lower">Minúsculas</option>
+            <option value="upper">Mayúsculas</option>
+            <option value="concat">Concatenar</option>
+          </select>
+        </td>
+      </tr>
+    `;
+  }
+
+  //tabla en el contenido del modal
+  modalContentDiv.innerHTML = `
+    <div class="modal-header">
+      <h5 class="modal-title">Configurar Destination</h5>
+      <button type="button" class="btn-close" onclick="toggleModal()" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Columna</th>
+            <th>Tipo</th>
+            <th>Longitud</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+      <div class="mb-3">
+        <label for="destinationTableName" class="form-label">Nombre de la Tabla Destino</label>
+        <input type="text" class="form-control" id="destinationTableName" placeholder="Tabla de destino">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="toggleModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="saveDestinationConfig()">Guardar</button>
+    </div>
+  `;
+
+  // Mostrar el modal
+  formModal.classList.add("show");
+  formModal.style.display = "block";
 }
 
-destination: {
-  etlID: id,
-  tabla: tabla_name,
-  query: select lower(col1), upper(col2) from tablaOrigen
-  destinoTable: nombreTabla
-}
+// Función para guardar la configuración del destino
+function saveDestinationConfig() {
+  const formModal = document.getElementById("form-modal");
+  const selects = formModal.querySelectorAll("select");
+  const destinationTableName = document.getElementById("destinationTableName").value;
 
-const etls = controlBlocks.find(block => block.id == currentBlock).etls
-etls.forEach(etl => {
-  const conversionObj = etl.conversion
-  Object.keys(converionObj).forEach(obj => {
-    if(obj.includes('col')) {
+  // Validar nombre de la tabla destino
+  if (!destinationTableName) {
+    alert("Por favor, ingresa el nombre de la tabla destino.");
+    return;
+  }
 
+  // Construir el objeto destination
+  const destinationConfig = {
+    etlID: localStorage.getItem("currentETL"),
+    destinoTable: destinationTableName,
+    columnas: {},
+  };
+
+  // Recorrer las acciones seleccionadas para cada columna
+  selects.forEach((select) => {
+    const columnName = select.dataset.column;
+    const action = select.value;
+
+    // Validar si falta una acción para alguna columna
+    if (!action) {
+      alert(`Selecciona una acción para la columna "${columnName}" antes de guardar.`);
+      return;
     }
-  })
-})
-*/
+
+    destinationConfig.columnas[columnName] = { action };
+  });
+
+  // Actualizar los datos en localStorage
+  const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
+  const currentControlBlockId = localStorage.getItem("controlBlockId");
+
+  const currentControlBlock = controlBlocks.find(
+    (block) => block.id === currentControlBlockId
+  );
+
+  currentControlBlock.destination = destinationConfig;
+
+  localStorage.setItem("controlBlocks", JSON.stringify(controlBlocks));
+
+  // Cerrar el modal
+  toggleModal();
+  console.log("Configuración de destination guardada:", destinationConfig);
+}
