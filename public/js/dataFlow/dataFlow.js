@@ -340,50 +340,123 @@ function renderEtls() {
 
 renderEtls();
 
-/*
+//sammy
+function openDestinationModal(destinationBlock) {
+  const formModal = document.getElementById("form-modal");
+  const modalContentDiv = formModal.querySelector(".modal-content");
 
-{
-  bloqueID: id,
-  etls: [obj]
-}
-
-obj = {
-  etlID: id,
-  connectionParams: objParams,
-  source: {id_nombretabla, col1, col2},
-  conversion: {id_nombretabla, }
-}
-
--------------------------------
-columna   tipo  length  action
-
-col1     VarChar 20      select: minuscula, mayuscula, concatenar, otro
-col2      VarChar 30      select: ----
--------------------------------
-
-conversion: {
-  col1: {
-    action: "select lower(col1) from tabla"
-  },
-  col2: {
-    action: "select lower(col1) from tabla"
+  //columnas del origen desde localStorage
+  const sourceData = JSON.parse(localStorage.getItem("source"));
+  if (!sourceData) {
+    alert("No se encontraron datos de origen. Conéctate primero a una tabla.");
+    return;
   }
+
+  // tabla dinámica con las columnas y acciones
+  let tableRows = "";
+for (const [columnName, columnInfo] of Object.entries(sourceData)) {
+  tableRows += `
+    <tr>
+      <td>${columnName}</td>
+      <td>${columnInfo.dataType || "N/A"}</td>
+      <td>${columnInfo.length ?? "-"}</td> <!-- Usa "??" para manejar valores nulos o indefinidos -->
+      <td>
+        <select class="form-select" data-column="${columnName}">
+          <option value="">Selecciona una acción</option>
+          <option value="lower">Minúsculas</option>
+          <option value="upper">Mayúsculas</option>
+          <option value="concat">Concatenar</option>
+        </select>
+      </td>
+    </tr>
+  `;
 }
 
-destination: {
-  etlID: id,
-  tabla: tabla_name,
-  query: select lower(col1), upper(col2) from tablaOrigen
-  destinoTable: nombreTabla
-}
 
-const etls = controlBlocks.find(block => block.id == currentBlock).etls
-etls.forEach(etl => {
-  const conversionObj = etl.conversion
-  Object.keys(converionObj).forEach(obj => {
-    if(obj.includes('col')) {
+  // insertar tabla en el contenido del modal
+  modalContentDiv.innerHTML = `
+    <div class="modal-header">
+      <h5 class="modal-title">Configurar Destination</h5>
+      <button type="button" class="btn-close" onclick="toggleModal()" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Columna</th>
+            <th>Tipo</th>
+            <th>Longitud</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+      <div class="mb-3">
+        <label for="destinationTableName" class="form-label">Nombre de la Tabla Destino</label>
+        <input type="text" class="form-control" id="destinationTableName" placeholder="Tabla de destino">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="toggleModal()">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="saveDestinationConfig()">Guardar</button>
+    </div>
+  `;
 
+  function saveDestinationConfig() {
+    const formModal = document.getElementById("form-modal");
+    const selects = formModal.querySelectorAll("select");
+    const destinationTableName = document.getElementById("destinationTableName").value;
+  
+    // validar nombre de la tabla destino
+    if (!destinationTableName) {
+      alert("Por favor, ingresa el nombre de la tabla destino.");
+      return;
     }
-  })
-})
-*/
+  
+    //el objeto destination
+    const destinationConfig = {
+      etlID: localStorage.getItem("currentETL"),
+      destinoTable: destinationTableName,
+      columnas: {},
+    };
+  
+    // recorrer las acciones seleccionadas para cada columna
+    selects.forEach((select) => {
+      const columnName = select.dataset.column;
+      const action = select.value;
+      if (action) {
+        destinationConfig.columnas[columnName] = { action };
+      }
+    });
+  
+    // actualizar los datos en localStorage
+    const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
+    const currentControlBlockId = localStorage.getItem("controlBlockId");
+  
+    const currentControlBlock = controlBlocks.find(
+      (block) => block.id === currentControlBlockId
+    );
+  
+    currentControlBlock.destination = destinationConfig;
+  
+    localStorage.setItem("controlBlocks", JSON.stringify(controlBlocks));
+  
+    // Cerrar el modal
+    toggleModal();
+    console.log("Configuración de destination guardada:", destinationConfig);
+  }
+  
+  
+
+  // Mostrar el modal
+  formModal.classList.add("show");
+  formModal.classList.remove("hidden");
+  
+}
+
+  // cerrar el modal
+  formModal.classList.remove("show");
+  formModal.classList.add("hidden");
+  
