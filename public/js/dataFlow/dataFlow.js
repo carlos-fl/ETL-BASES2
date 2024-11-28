@@ -324,11 +324,11 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   if (this.value === 'concat') {  
                     generateModalConcat(columnData, sourceData);                      // Mostrar el modal si se selecciona la opción "conca t"
                     updateETLConversion(columnName, selectedOperation);
-                    processMissingConversions();                                      
+                    //processMissingConversions();                                      
                   } else {
                   
                    updateETLConversion(columnName,  selectedOperation);
-                   processMissingConversions();
+                   //processMissingConversions();
                  }                
                   
                 });
@@ -501,6 +501,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
       
     }
   }
+
   if (typeOfBlockDraggedId == "draggable-destination") {
     modalContentDiv.innerHTML = `<div class="modal-header">
                   <h5 class="modal-title">Data conversion</h5>
@@ -513,7 +514,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
                 </div>`;
   }
-}
+
 
 
 //modal para selecciona el otro campo con el que se va ha concatenar 
@@ -589,7 +590,7 @@ function generateModalConcat(columnData, sourceData) {
   };
 }
 
-
+}
 
 // Función  para obtener opciones según el tipo de dato
 function getOperationOptions(dataType) {
@@ -621,6 +622,7 @@ function getOperationOptions(dataType) {
   }
   return '';  // Devolver vacío si no hay operaciones válidas
 }
+
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
