@@ -343,6 +343,17 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
         }  
 
        
+    }if (typeOfBlockDraggedId == "draggable-destination") {
+      modalContentDiv.innerHTML = `<div class="modal-header">
+                    <h5 class="modal-title">Data conversion</h5>
+                    <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
+                  </div>
+                  <div class="modal-body">
+                    <h2>DATA CONVERSION</h2>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
+                  </div>`;
     }
       
 
@@ -502,18 +513,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
     }
   }
 
-  if (typeOfBlockDraggedId == "draggable-destination") {
-    modalContentDiv.innerHTML = `<div class="modal-header">
-                  <h5 class="modal-title">Data conversion</h5>
-                  <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
-                </div>
-                <div class="modal-body">
-                  <h2>DATA CONVERSION</h2>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
-                </div>`;
-  }
+  
 
 
 
