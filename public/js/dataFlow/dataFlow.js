@@ -341,8 +341,8 @@ function renderEtls() {
 renderEtls();
 
 //sammy
+//modal de configuración del destino
 function openDestinationModal(destinationBlock) {
-  const formModal = document.getElementById("form-modal");
   const modalContentDiv = formModal.querySelector(".modal-content");
 
   //columnas del origen desde localStorage
@@ -352,28 +352,27 @@ function openDestinationModal(destinationBlock) {
     return;
   }
 
-  // tabla dinámica con las columnas y acciones
+  //tabla dinámica con las columnas y acciones
   let tableRows = "";
-for (const [columnName, columnInfo] of Object.entries(sourceData)) {
-  tableRows += `
-    <tr>
-      <td>${columnName}</td>
-      <td>${columnInfo.dataType || "N/A"}</td>
-      <td>${columnInfo.length ?? "-"}</td> <!-- Usa "??" para manejar valores nulos o indefinidos -->
-      <td>
-        <select class="form-select" data-column="${columnName}">
-          <option value="">Selecciona una acción</option>
-          <option value="lower">Minúsculas</option>
-          <option value="upper">Mayúsculas</option>
-          <option value="concat">Concatenar</option>
-        </select>
-      </td>
-    </tr>
-  `;
-}
+  for (const [columnName, columnInfo] of Object.entries(sourceData)) {
+    tableRows += `
+      <tr>
+        <td>${columnName}</td>
+        <td>${columnInfo.dataType || "N/A"}</td>
+        <td>${columnInfo.length ?? "-"}</td>
+        <td>
+          <select class="form-select" data-column="${columnName}">
+            <option value="">Selecciona una acción</option>
+            <option value="lower">Minúsculas</option>
+            <option value="upper">Mayúsculas</option>
+            <option value="concat">Concatenar</option>
+          </select>
+        </td>
+      </tr>
+    `;
+  }
 
-
-  // insertar tabla en el contenido del modal
+  //tabla en el contenido del modal
   modalContentDiv.innerHTML = `
     <div class="modal-header">
       <h5 class="modal-title">Configurar Destination</h5>
@@ -404,59 +403,57 @@ for (const [columnName, columnInfo] of Object.entries(sourceData)) {
     </div>
   `;
 
-  function saveDestinationConfig() {
-    const formModal = document.getElementById("form-modal");
-    const selects = formModal.querySelectorAll("select");
-    const destinationTableName = document.getElementById("destinationTableName").value;
-  
-    // validar nombre de la tabla destino
-    if (!destinationTableName) {
-      alert("Por favor, ingresa el nombre de la tabla destino.");
-      return;
-    }
-  
-    //el objeto destination
-    const destinationConfig = {
-      etlID: localStorage.getItem("currentETL"),
-      destinoTable: destinationTableName,
-      columnas: {},
-    };
-  
-    // recorrer las acciones seleccionadas para cada columna
-    selects.forEach((select) => {
-      const columnName = select.dataset.column;
-      const action = select.value;
-      if (action) {
-        destinationConfig.columnas[columnName] = { action };
-      }
-    });
-  
-    // actualizar los datos en localStorage
-    const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
-    const currentControlBlockId = localStorage.getItem("controlBlockId");
-  
-    const currentControlBlock = controlBlocks.find(
-      (block) => block.id === currentControlBlockId
-    );
-  
-    currentControlBlock.destination = destinationConfig;
-  
-    localStorage.setItem("controlBlocks", JSON.stringify(controlBlocks));
-  
-    // Cerrar el modal
-    toggleModal();
-    console.log("Configuración de destination guardada:", destinationConfig);
-  }
-  
-  
-
   // Mostrar el modal
   formModal.classList.add("show");
-  formModal.classList.remove("hidden");
-  
+  formModal.style.display = "block";
 }
 
-  // cerrar el modal
-  formModal.classList.remove("show");
-  formModal.classList.add("hidden");
-  
+// Función para guardar la configuración del destino
+function saveDestinationConfig() {
+  const formModal = document.getElementById("form-modal");
+  const selects = formModal.querySelectorAll("select");
+  const destinationTableName = document.getElementById("destinationTableName").value;
+
+  // Validar nombre de la tabla destino
+  if (!destinationTableName) {
+    alert("Por favor, ingresa el nombre de la tabla destino.");
+    return;
+  }
+
+  // Construir el objeto destination
+  const destinationConfig = {
+    etlID: localStorage.getItem("currentETL"),
+    destinoTable: destinationTableName,
+    columnas: {},
+  };
+
+  // Recorrer las acciones seleccionadas para cada columna
+  selects.forEach((select) => {
+    const columnName = select.dataset.column;
+    const action = select.value;
+
+    // Validar si falta una acción para alguna columna
+    if (!action) {
+      alert(`Selecciona una acción para la columna "${columnName}" antes de guardar.`);
+      return;
+    }
+
+    destinationConfig.columnas[columnName] = { action };
+  });
+
+  // Actualizar los datos en localStorage
+  const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
+  const currentControlBlockId = localStorage.getItem("controlBlockId");
+
+  const currentControlBlock = controlBlocks.find(
+    (block) => block.id === currentControlBlockId
+  );
+
+  currentControlBlock.destination = destinationConfig;
+
+  localStorage.setItem("controlBlocks", JSON.stringify(controlBlocks));
+
+  // Cerrar el modal
+  toggleModal();
+  console.log("Configuración de destination guardada:", destinationConfig);
+}
