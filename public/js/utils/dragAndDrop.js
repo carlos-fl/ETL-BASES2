@@ -1,15 +1,15 @@
 //TODO: create modal for data flow
-// implementing drag and drop listeners
+// Implementing drag and drop listeners
+
+// Handler para arrastrar sobre un contenedor
 function dragOverHandler(ev) {
   ev.preventDefault();
   ev.dataTransfer.dropEffect = "copy";
 }
 
 /**
- *
  * @param {Event} ev
- * @param {VoidFunction} cb
- * cb is a callback function
+ * @param {VoidFunction} cb - Callback para acciones personalizadas (como abrir un modal)
  */
 function dropHandler(ev, cb) {
   ev.preventDefault();
@@ -18,57 +18,58 @@ function dropHandler(ev, cb) {
   const data = ev.dataTransfer.getData("application/my-app");
   const dragElement = document.getElementById(data);
 
-  // Verificar que el elemento arrastrado exista antes de clonar
   if (dragElement) {
     const clone = dragElement.cloneNode(true); // Clonar el elemento arrastrado
     clone.id = `${data}-clone-${new Date().getTime()}`; // Asignar un nuevo ID al clon
 
-    // agrega clases para mostrar botones, sombra y layout
+    // Mostrar botones y ajustar estilo según tipo de elemento arrastrado
     const iconContainer = clone.querySelector(".d-none");
-    if (dragElement.id != "ETL") {
-      // add event listener to clone only if it is not ETL container block
+
+    if (dragElement.id !== "ETL") {
+      // Agregar evento de doble clic para abrir el modal si no es un bloque ETL
       clone.addEventListener("dblclick", function () {
-        cb(clone, dragElement.id);
+        cb(clone, dragElement.id); // Callback para acciones personalizadas
       });
 
+      // Ajustar clases de estilo
       iconContainer.classList.remove("d-none");
       iconContainer.classList.add("d-block");
-      clone.classList.remove("h-10");
-      clone.classList.remove("w-75");
-      clone.classList.add('h-25')
-      clone.classList.add('w-100')
-      clone.classList.remove("justify-content-center");
-      clone.classList.remove("btn-primary");
-      clone.classList.add("btn-secondary");
-      clone.classList.add("justify-content-between");
-      clone.classList.add("shadow");
-      // quita los handlers del elemento clonado
-      clone.removeEventListener("dragStart", dragStartHandler);
-      //evita que se clone encima dentro de elementos del mismo tipo
-      // se clona solo en los divs
-      if (ev.target.id.includes('ETL') || dragElement.id == 'draggable')
-        ev.target.appendChild(clone); // Añadir el clon a la zona de destino
+      clone.classList.remove("h-10", "w-75", "justify-content-center", "btn-primary");
+      clone.classList.add("h-25", "w-100", "btn-secondary", "justify-content-between", "shadow");
+
+      // Evitar que se vuelva a añadir eventos de arrastre
+      clone.removeEventListener("dragstart", dragStartHandler);
+
+      // Verificar que el contenedor sea válido antes de añadir el clon
+      if (ev.target.id.includes("ETL") || dragElement.id === "draggable") {
+        ev.target.appendChild(clone); // Añadir el clon al contenedor destino
+      }
     } else {
+      // Configuración especial para bloques ETL
       iconContainer.classList.remove("d-none");
       iconContainer.classList.add("d-block");
-      clone.classList.remove('h-10') 
-      clone.classList.remove('w-75') 
-      clone.classList.add('h-40')
-      clone.classList.add('p-4')
-      clone.classList.add('w-40')
-      clone.classList.add('d-flex')
-      clone.classList.add('flex-column')
-      clone.classList.add('justify-content-between')
+      clone.classList.remove("h-10", "w-75");
+      clone.classList.add("h-40", "p-4", "w-40", "d-flex", "flex-column", "justify-content-between");
 
-      if (ev.target.id == 'data-flow-blocks-container') 
-        ev.target.appendChild(clone)
+      // Verificar contenedor antes de añadir
+      if (ev.target.id === "data-flow-blocks-container") {
+        ev.target.appendChild(clone);
+      }
     }
-
+    //sammy
+    // Configuración específica para destination
+    if (dragElement.id === "destination") {
+      // Agregar evento de doble clic para abrir el modal
+      clone.addEventListener("dblclick", function () {
+        openDestinationModal(clone); // Llama a la función para abrir el modal
+      });
+    }
   }
 }
 
+// Handler para el inicio del arrastre
 function dragStartHandler(ev) {
-  // Add the target element's id to the data transfer object
+  // Añadir el ID del elemento al objeto de transferencia de datos
   ev.dataTransfer.setData("application/my-app", ev.target.id);
   ev.dataTransfer.effectAllowed = "copy";
 }
