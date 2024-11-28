@@ -32,6 +32,7 @@ async function dbConnection() {
     });
     const result = await response.json();
     let ETLObject = JSON.parse(window.localStorage.getItem("currentETL")); //obtiene el objeto del ETL actual
+    console.log(result.testQueryResult.source)
     ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
     ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
     let controlFlowInfo = JSON.parse(
@@ -227,6 +228,7 @@ function toggleModal(target, typeOfBlockDraggedId) {
   setModalHtmlContent(typeOfBlockDraggedId);
 
   if (formModal.classList.contains("show")) {
+    console.log('modal clicked')
     formModal.classList.remove("show");
     formModal.style.display = "none";
   } else {
