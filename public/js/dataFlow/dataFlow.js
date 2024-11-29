@@ -226,7 +226,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
           if (controlFlowInfo && currentControlBlockId) {      
             const currentControlBlock = controlFlowInfo.find(block => block.id === currentControlBlockId);         // Buscar el bloque con el ID correspondiente
             if (currentControlBlock) {
-              console.log("Bloque actual encontrado:", currentControlBlock);
+              //console.log("Bloque actual encontrado:", currentControlBlock);
               return currentControlBlock;                                                                          // Retorna el objeto del bloque actual
             } else {
               console.error("No se encontró el bloque de control con ID:", currentControlBlockId);
@@ -277,7 +277,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
              const etlActual = currentControlBlock.etls.find(etl => etl.etlID === etlObject.etlID);
              const conversionFields = etlActual.conversion?.conversion || {}
              if (!conversionFields.hasOwnProperty(columnName)) {                       // Si la columna no está en conversionFields, agregarla con operación 'null'
-             updateETLConversion(columnName, 'null');                                  // Agrega conversión por defecto
+             updateETLConversion(columnName, 'null', 'null');                                  // Agrega conversión por defecto
              }
 
               if (operationOptions) {
@@ -321,32 +321,28 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   const clickedRow = event.currentTarget;                            // event.currentTarget hace referencia a la fila (`tr`) que disparó el evento
                   const rowId = clickedRow.id;                                       // Extrae el ID de la fila
                   const columnName = clickedRow.querySelector('td').textContent;     // Captura el nombre de la columna (en la primera columna)
-                  console.log('ID de la fila seleccionada:', rowId, columnName);     // Imprime el ID en la consola
+                 // console.log('ID de la fila seleccionada:', rowId, columnName);     // Imprime el ID en la consola
                   
                   localStorage.setItem('currentIdCampo', rowId);                     // Guarda el nombre del campo seleccionado
-                  console.log('Campo seleccionado:', columnName);
+                  //console.log('Campo seleccionado:', columnName);
                 });
 
                 const selectElement = row.querySelector('.operation-select');         // Agregar el evento 'change' al select dentro de la fila actual
                 selectElement.addEventListener('change', function() {
                   const selectedOperation = this.value;                               // Captura el valor seleccionado en el select
                   console.log('Operación seleccionada:', selectedOperation);
-                  if (this.value === 'concat') {  
-                    generateModalConcat(columnData, sourceData);                      // Mostrar el modal si se selecciona la opción "conca t"
-                    updateETLConversion(columnName, selectedOperation);
-                    //processMissingConversions();                                      
+                  if (this.value === 'concat') { 
+                     
+                    generateModalConcat( sourceData, columnName, selectedOperation);    // Mostrar el modal si se selecciona la opción "conca t" 
+                   
                   } else {
-                  
-                   updateETLConversion(columnName,  selectedOperation);
-                   //processMissingConversions();
+                    let selectedCampo2 = localStorage.getItem('selectedCampo2') 
+                   updateETLConversion(columnName,  selectedOperation, selectedCampo2);
+                   
                  }                
-                  
-                });
-
-                
-              } 
-            });
-            
+                }); 
+              }  
+            });  
           }            
         } else {
           console.log('No hay datos para mostrar para este etl ');
@@ -366,7 +362,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   </div>`;
     }
       
-
+    /*
     function processNullSelections() {
       dbConnection(this)
       // Selecciona todas las filas de la tabla
@@ -386,10 +382,10 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
         }
       });
     }
-
+*/
 
     //funcion para obtenr la acccion a realizar segun lo seleccinado para camda campo de una tabla propie de u etl 
-    function generateSQLQuery(columnName,selectedCampo2  , tableName , selectedOperation) {
+    function generateSQLQuery(columnName,selectedCampo2  , selectedOperation) {
     let query = '';
     campoName = columnName;
 
@@ -433,7 +429,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
 
 
     // Función para actualizar el ETL con el atributo de conversión
-    function updateETLConversion(columnName,   selectedOperation ) {
+    function updateETLConversion(columnName,   selectedOperation,  selectedCampo2) {
         const currentControlBlock = getCurrentControlBlock();                        // Recupera el bloque actual
       
         if (currentControlBlock && currentControlBlock.etls) {
@@ -441,16 +437,13 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
           const etlObject = JSON.parse(divETLPadreId);                               // Convierte la cadena JSON a objeto
           const etlID = etlObject.etlID;                                             // Accede al valor de la propiedad etlID
 
-          console.log(etlID);                                                        // Muestra el resultado del id del etl
+          //console.log(etlID);                                                        // Muestra el resultado del id del etl
           
                                                                                       
           currentControlBlock.etls = currentControlBlock.etls.map(etl => {            // Actualizar el ETL específico
             if (etl.etlID === etlID) {
-              const tableName = etl.connectionParams?.table || 'undefined_table';     // Nombre de la tabla directo del ETL
-              let selectedCampo2 = localStorage.getItem('selectedCampo2') ;
-              console.log('este es el campo de m',selectedCampo2);
-              
-              const query = generateSQLQuery(columnName, selectedCampo2, tableName, selectedOperation); // Generar la consulta SQL usando la operación seleccionada
+              const tableName = etl.connectionParams?.table || 'undefined_table';     // Nombre de la tabla directo del ET            
+              const query = generateSQLQuery(columnName, selectedCampo2, selectedOperation); // Generar la consulta SQL usando la operación seleccionada
       
               const updatedConversion = {                                              // Crear o actualizar la estructura 'conversion'
                 nombre_tabla: tableName,
@@ -469,14 +462,14 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
             }
             return etl;                                                                // Si no coincide, devolver sin cambios
           });
-          console.log('Antes de actualizar:', currentControlBlock);
+         // console.log('Antes de actualizar:', currentControlBlock);
           let controlBlocks = JSON.parse(localStorage.getItem('controlBlocks')) || [];
           controlBlocks = controlBlocks.map(block => 
             block.id === currentControlBlock.id ? currentControlBlock : block
           );
 
           localStorage.setItem('controlBlocks', JSON.stringify(controlBlocks));         // Guardar el controlBlock actualizado en localStorage
-          console.log('ETL actualizado con la conversión:', currentControlBlock);
+          //console.log('ETL actualizado con la conversión:', currentControlBlock);
         } else {
           console.error('No se encontró el bloque actual o no tiene ETLs.');
         }
@@ -528,7 +521,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
 
 
 //modal para selecciona el otro campo con el que se va ha concatenar 
-function generateModalConcat(columnData, sourceData) {
+function generateModalConcat( sourceData, columnName, selectedOperation) {
   let existingModal = document.getElementById('myModal');
   if (existingModal) {
     existingModal.remove();
@@ -566,7 +559,7 @@ function generateModalConcat(columnData, sourceData) {
       let selectedCampo2 = this.value;                                                       // Captura el valor seleccionado en el select
       localStorage.setItem('selectedCampo2', selectedCampo2);                                // se Guarda en localStorage
      console.log('Segundo campo seleccionado:', selectedCampo2);
-     
+     updateETLConversion(columnName,   selectedOperation,  selectedCampo2);
    });
  } else {
    console.error('El select no está disponible para agregar el evento.');
