@@ -79,6 +79,15 @@ function deleteDataFlowBlock(node) {
     console.log(indexOfEtlToDelete, controlBlockEtls[indexOfEtlToDelete])
     controlBlockEtls.splice(indexOfEtlToDelete, 1)
     window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowBlocks))
+  } else {
+    controlBlockEtls = controlFlowBlocks[indexOfBlock].etls
+    const currentEtlId = JSON.parse(window.localStorage.getItem('currentETL'))
+    indexOfCurrentEtl = controlBlockEtls.findIndex(block => block.etlID == currentEtlId.etlID)
+    console.log(indexOfCurrentEtl)
+    console.log('blockNode', blockNode.id)
+    const fieldToDelete = blockNode.id.split('-')[0]
+    delete controlBlockEtls[indexOfCurrentEtl][fieldToDelete]
+    window.localStorage.setItem('controlBlocks', JSON.stringify(controlFlowBlocks))
   }
   blockNode.remove()
 }
