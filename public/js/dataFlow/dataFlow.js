@@ -447,7 +447,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
           currentControlBlock.etls = currentControlBlock.etls.map(etl => {            // Actualizar el ETL específico
             if (etl.etlID === etlID) {
               const tableName = etl.connectionParams?.table || 'undefined_table';     // Nombre de la tabla directo del ETL
-              let selectedCampo2 = localStorage.getItem('selectedCampo2') ;
+              let selectedCampo2 = window.localStorage.getItem('selectedCampo2') ;
               console.log('este es el campo de m',selectedCampo2);
               
               const query = generateSQLQuery(columnName, selectedCampo2, tableName, selectedOperation); // Generar la consulta SQL usando la operación seleccionada
