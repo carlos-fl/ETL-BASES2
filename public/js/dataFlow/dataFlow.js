@@ -19,6 +19,14 @@ function extractData() {
   return data;
 }
 
+/**
+ * 
+ * @param {HTMLButtonElement} button 
+ */
+function alternativeCloseModal(button) {
+  toggleModal(button)
+}
+
 async function dbConnection() {
   var formData = extractData();
 
@@ -113,6 +121,7 @@ async function checkSelectValue() {
  * set html content for modals
  */
 function setModalHtmlContent(typeOfBlockDraggedId) {
+  console.log('clicked!!----------------------------------------------------')
   const modalContentDiv = formModal.childNodes[1].childNodes[1];
   if (typeOfBlockDraggedId == "source") {
     modalContentDiv.innerHTML = `<div class="modal-header">
@@ -202,7 +211,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                             </table>
                         </div>
                     <div class="modal-footer">
-                      <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
+                      <button type="button" class="btn btn-primary" onclick="alternativeCloseModal(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
                     </div>`;
 
       // TODO: iterate through every column from source oledb
@@ -231,6 +240,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
         
         
         const currentETLObject1 = JSON.parse(localStorage.getItem('currentETL'));                         // Recuperar el objeto del ETL actual en el que estamos, desde `localStorage`
+        console.log('CURRENT ETL----------------------------------------------------------------------------------------------: ', currentETLObject1)
         const divETLPadreId1 = currentETLObject1 ? currentETLObject1.etlID : null;                        // Acceder solo a la propiedad `etlID`
         if (divETLPadreId1) {                                                                             // Verificar y usar el valor de `etlID`
           console.log("ID del div padre:", divETLPadreId1);
@@ -630,7 +640,6 @@ function getOperationOptions(dataType) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function toggleModal(target, typeOfBlockDraggedId) {
-  setModalHtmlContent(typeOfBlockDraggedId);
 
   if (formModal.classList.contains("show")) {
     formModal.classList.remove("show");
@@ -650,6 +659,8 @@ function toggleModal(target, typeOfBlockDraggedId) {
     formModal.classList.add("show");
     formModal.style.display = "block";
   }
+
+  setModalHtmlContent(typeOfBlockDraggedId);
 }
 
 function toggleNotificationModal() {
