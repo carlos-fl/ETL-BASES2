@@ -26,26 +26,7 @@ function extractData() {
 function alternativeCloseModal(button) {
   toggleModal(button)
 }
-/*
-async function dbConnection() {
-  var formData = extractData();
 
-  
-    
-    let controlFlowInfo = JSON.parse(
-      window.localStorage.getItem("controlBlocks")
-    ); // obtiene el objeto de controlFLow
-    // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
-    let currentControlBlockId = window.localStorage.getItem("controlBlockId");
-    for (let object of controlFlowInfo) {
-      if (object.id === currentControlBlockId) {
-        object.etls.push(ETLObject);
-      }
-    }
-    
-
-   
-}*/
 async function dbConnection() {
   var formData = extractData();
 
@@ -409,27 +390,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   </div>`;
     }
       
-    /*
-    function processNullSelections() {
-      dbConnection(this)
-      // Selecciona todas las filas de la tabla
-      const rows = document.querySelectorAll('tr');
     
-      rows.forEach(row => {
-        const selectElement = row.querySelector('.operation-select');     // Encuentra el <select> dentro de la fila
-        
-        
-        if (selectElement && selectElement.value === 'null') {            // Verifica si el valor seleccionado es 'null'
-          const columnName = row.querySelector('td').textContent.trim();  // Captura el nombre de la columna
-          const selectedOperation = 'null';                               // Valor seleccionado
-  
-          updateETLConversion(columnName, selectedOperation);            // Llama a la función con el nombre de la columna y la operación 'null'
-          
-          console.log(`Columna "${columnName}" procesada con operación "${selectedOperation}"`);
-        }
-      });
-    }
-*/
 
     //funcion para obtenr la acccion a realizar segun lo seleccinado para camda campo de una tabla propie de u etl 
     function generateSQLQuery(columnName,selectedCampo2  , selectedOperation) {
