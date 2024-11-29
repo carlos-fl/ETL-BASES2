@@ -259,6 +259,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
            } else {
               const sourceData  = filteredETL[0].source; 
               const tableBody = document.getElementById('tbody');
+              console.log('este es el source de la tabla actual', sourceData);
               tableBody.innerHTML = "";
 
            
@@ -474,7 +475,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
           console.error('No se encontró el bloque actual o no tiene ETLs.');
         }
     }
-
+/*
     function processMissingConversions() {
         const currentControlBlock = getCurrentControlBlock();                        // Recupera el bloque actual
         if (!currentControlBlock || !currentControlBlock.etls) {
@@ -513,7 +514,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
       
 
       
-    }
+    }*/
   }
 
   
@@ -615,7 +616,7 @@ function getOperationOptions(dataType) {
       <option value="getTime">Get Time</option>
       <option value="concat">Concatenate</option>
     `;
-  } else if (dataType.includes('int') || dataType.includes('float')) {
+  } else if (dataType.includes('int') || dataType.includes('float')|| dataType.includes('decimal')) {
     
     return `
       <option value="null"> -------- </option>
