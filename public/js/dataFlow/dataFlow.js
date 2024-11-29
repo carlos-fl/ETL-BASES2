@@ -750,62 +750,56 @@ function renderEtls() {
 
 renderEtls();
 
-//sammy
-//modal de configuración del destino
+//Sammy
+// Modal de configuración del destino
 function openDestinationModal(destinationBlock) {
   const modalContentDiv = formModal.querySelector(".modal-content");
 
-  //columnas del origen desde localStorage
-  const sourceData = JSON.parse(localStorage.getItem("source"));
-  if (!sourceData) {
-    alert("No se encontraron datos de origen. Conéctate primero a una tabla.");
-    return;
-  }
-
-  //tabla dinámica con las columnas y acciones
-  let tableRows = "";
-  for (const [columnName, columnInfo] of Object.entries(sourceData)) {
-    tableRows += `
-      <tr>
-        <td>${columnName}</td>
-        <td>${columnInfo.dataType || "N/A"}</td>
-        <td>${columnInfo.length ?? "-"}</td>
-        <td>
-          <select class="form-select" data-column="${columnName}">
-            <option value="">Selecciona una acción</option>
-            <option value="lower">Minúsculas</option>
-            <option value="upper">Mayúsculas</option>
-            <option value="concat">Concatenar</option>
-          </select>
-        </td>
-      </tr>
-    `;
-  }
-
-  //tabla en el contenido del modal
+  // Configuración de conexión al destino
   modalContentDiv.innerHTML = `
     <div class="modal-header">
-      <h5 class="modal-title">Configurar Destination</h5>
+      <h5 class="modal-title">Configurar Destino</h5>
       <button type="button" class="btn-close" onclick="toggleModal()" aria-label="Close"></button>
     </div>
     <div class="modal-body">
+      <h6>Configuración de Conexión</h6>
+      <div class="mb-3">
+        <label for="destServerName" class="form-label">Nombre del Servidor</label>
+        <input type="text" class="form-control" id="destServerName" placeholder="Servidor de destino">
+      </div>
+      <div class="mb-3">
+        <label for="destDbName" class="form-label">Nombre de la Base de Datos</label>
+        <input type="text" class="form-control" id="destDbName" placeholder="Base de datos de destino">
+      </div>
+      <div class="mb-3">
+        <label for="destUserName" class="form-label">Usuario</label>
+        <input type="text" class="form-control" id="destUserName" placeholder="Usuario de conexión">
+      </div>
+      <div class="mb-3">
+        <label for="destPassword" class="form-label">Contraseña</label>
+        <input type="password" class="form-control" id="destPassword" placeholder="Contraseña de conexión">
+      </div>
+      <div class="mb-3">
+        <button type="button" class="btn btn-primary" onclick="connectToDestination()">Conectar</button>
+      </div>
+      <div class="mb-3">
+        <label for="destTableName" class="form-label">Tabla de Destino</label>
+        <select class="form-select" id="destTableName">
+          <option value="">Selecciona una tabla</option>
+        </select>
+      </div>
+      <h6>Mapeo de Columnas</h6>
       <table class="table">
         <thead>
           <tr>
-            <th>Columna</th>
-            <th>Tipo</th>
-            <th>Longitud</th>
-            <th>Acción</th>
+            <th>Columna Origen</th>
+            <th>Columna Destino</th>
           </tr>
         </thead>
-        <tbody>
-          ${tableRows}
+        <tbody id="destinationColumnMapping">
+          <!-- Las filas dinámicas se llenarán aquí -->
         </tbody>
       </table>
-      <div class="mb-3">
-        <label for="destinationTableName" class="form-label">Nombre de la Tabla Destino</label>
-        <input type="text" class="form-control" id="destinationTableName" placeholder="Tabla de destino">
-      </div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" onclick="toggleModal()">Cancelar</button>
@@ -813,57 +807,103 @@ function openDestinationModal(destinationBlock) {
     </div>
   `;
 
-  // Mostrar el modal
+  // Mostrar la modal
   formModal.classList.add("show");
   formModal.style.display = "block";
 }
 
-// Función para guardar la configuración del destino
-function saveDestinationConfig() {
-  const formModal = document.getElementById("form-modal");
-  const selects = formModal.querySelectorAll("select");
-  const destinationTableName = document.getElementById("destinationTableName").value;
+// Función para conectar al destino y traer tablas
+async function connectToDestination() {
+  const serverName = document.getElementById("destServerName").value;
+  const dbName = document.getElementById("destDbName").value;
+  const userName = document.getElementById("destUserName").value;
+  const password = document.getElementById("destPassword").value;
 
-  // Validar nombre de la tabla destino
-  if (!destinationTableName) {
-    alert("Por favor, ingresa el nombre de la tabla destino.");
+  if (!serverName || !dbName || !userName || !password) {
+    alert("Por favor, completa todos los campos de conexión.");
     return;
   }
 
-  // Construir el objeto destination
-  const destinationConfig = {
-    etlID: localStorage.getItem("currentETL"),
-    destinoTable: destinationTableName,
-    columnas: {},
-  };
+  try {
+    const response = await fetch("/connect", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ server: serverName, dataBase: dbName, user: userName, password }),
+    });
 
-  // Recorrer las acciones seleccionadas para cada columna
-  selects.forEach((select) => {
-    const columnName = select.dataset.column;
-    const action = select.value;
+    const result = await response.json();
+    const tableSelect = document.getElementById("destTableName");
 
-    // Validar si falta una acción para alguna columna
-    if (!action) {
-      alert(`Selecciona una acción para la columna "${columnName}" antes de guardar.`);
-      return;
+    if (result.testQueryResult && result.testQueryResult.tables) {
+      tableSelect.innerHTML = `<option value="">Selecciona una tabla</option>`;
+      result.testQueryResult.tables.forEach((table) => {
+        const option = document.createElement("option");
+        option.value = table.name;
+        option.textContent = table.name;
+        tableSelect.appendChild(option);
+      });
+    } else {
+      alert("No se encontraron tablas disponibles.");
     }
+  } catch (error) {
+    console.error("Error al conectar al destino:", error);
+    alert("Error al conectar al destino.");
+  }
+}
 
-    destinationConfig.columnas[columnName] = { action };
+// Guardar configuración del destino
+function saveDestinationConfig() {
+  const destTableName = document.getElementById("destTableName").value;
+  const serverName = document.getElementById("destServerName").value;
+  const dbName = document.getElementById("destDbName").value;
+  const userName = document.getElementById("destUserName").value;
+  const password = document.getElementById("destPassword").value;
+
+  if (!destTableName) {
+    alert("Por favor, selecciona una tabla de destino.");
+    return;
+  }
+
+  const columnMappings = Array.from(
+    document.querySelectorAll("#destinationColumnMapping tr")
+  ).map((row) => {
+    const sourceColumn = row.querySelector(".source-column").textContent;
+    const destinationColumn = row.querySelector(".destination-column").value;
+
+    return { sourceColumn, destinationColumn };
   });
 
-  // Actualizar los datos en localStorage
-  const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
   const currentControlBlockId = localStorage.getItem("controlBlockId");
-
+  const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
   const currentControlBlock = controlBlocks.find(
     (block) => block.id === currentControlBlockId
   );
 
-  currentControlBlock.destination = destinationConfig;
+  const currentETL = JSON.parse(localStorage.getItem("currentETL"));
+  const queries = columnMappings.map((mapping) => {
+    return `LOWER(${mapping.sourceColumn}) AS ${mapping.destinationColumn}`;
+  });
+
+  const query = `SELECT ${queries.join(", ")} FROM ${localStorage.getItem("sourceTable")}`;
+
+  const destinationConfig = {
+    etlID: currentETL.etlID,
+    tabla: localStorage.getItem("sourceTable"),
+    query,
+    destinoTable: destTableName,
+    connection: { serverName, dbName, userName, password },
+  };
+
+  currentETL.destination = destinationConfig;
+
+  currentControlBlock.etls = currentControlBlock.etls.map((etl) =>
+    etl.etlID === currentETL.etlID ? currentETL : etl
+  );
 
   localStorage.setItem("controlBlocks", JSON.stringify(controlBlocks));
 
-  // Cerrar el modal
   toggleModal();
-  console.log("Configuración de destination guardada:", destinationConfig);
+  alert("Configuración de destino guardada correctamente.");
 }
