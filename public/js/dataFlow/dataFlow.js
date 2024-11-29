@@ -207,21 +207,427 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
 
       // TODO: iterate through every column from source oledb
       const tableBody = document.getElementById("tbody");
+       //iterar los campos de las tablas seleccionados para que se muestrn en la modal 
+        // Selección del cuerpo de la tabla
+        
+        function getCurrentControlBlock() {
+          const controlFlowInfo = JSON.parse(window.localStorage.getItem("controlBlocks"));
+          const currentControlBlockId = window.localStorage.getItem("controlBlockId");
+          
+          if (controlFlowInfo && currentControlBlockId) {      
+            const currentControlBlock = controlFlowInfo.find(block => block.id === currentControlBlockId);         // Buscar el bloque con el ID correspondiente
+            if (currentControlBlock) {
+              console.log("Bloque actual encontrado:", currentControlBlock);
+              return currentControlBlock;                                                                          // Retorna el objeto del bloque actual
+            } else {
+              console.error("No se encontró el bloque de control con ID:", currentControlBlockId);
+              return null;
+            }
+          } else {
+            console.error("Datos de `controlBlocks` o `currentControlBlockId` no disponibles.");
+            return null;
+          }
+        }
+        
+        
+        const currentETLObject1 = JSON.parse(localStorage.getItem('currentETL'));                         // Recuperar el objeto del ETL actual en el que estamos, desde `localStorage`
+        const divETLPadreId1 = currentETLObject1 ? currentETLObject1.etlID : null;                        // Acceder solo a la propiedad `etlID`
+        if (divETLPadreId1) {                                                                             // Verificar y usar el valor de `etlID`
+          console.log("ID del div padre:", divETLPadreId1);
+        } else {
+          console.log("No se encontró el etlID en localStorage.");
+        }
+
+        const controlBlocks1 = JSON.parse(localStorage.getItem('controlBlocks'));
+        const currentBlocks = getCurrentControlBlock();
+        if (currentBlocks) {
+           console.log("ID del bloque actual:", currentBlocks.id);
+
+           const filteredETL = currentBlocks.etls.filter(etl => etl.etlID === divETLPadreId1);     // Filtra el ETL cuyo etlID coincide con divETLPAdreId, qeu es el id actual sobre el et en que se esta interactuaando
+           if(filteredETL.length <= 0 ){                                                           // Verifica si filteredETL tiene al menos un elemento
+              console.error(`No se encontró ningún ETL con el etlID: ${divETLPadreId1}`);
+           } else {
+              const sourceData  = filteredETL[0].source; 
+              const tableBody = document.getElementById('tbody');
+              tableBody.innerHTML = "";
+
+           
+           Object.keys(sourceData).forEach((columnName, index) => {                    // Agregamos 'index' para numerar las filas
+              const columnData = sourceData[columnName];
+              const operationOptions = getOperationOptions(columnData.dataType);
+            
+              const divETLPadreId = localStorage.getItem('currentETL');                // Recupera el objeto desde localStorage
+              if (!divETLPadreId) {
+                console.error('No se encontró el ETL en localStorage.');
+                return;                                                                // Sale de la función si no se encuentra
+              }
+              const etlObject = JSON.parse(divETLPadreId);                             // Convierte la cadena JSON en objeto
+             // Verifica si la columna ya tiene una conversión
+             const currentControlBlock = getCurrentControlBlock();                     // Bloque actual
+             const etlActual = currentControlBlock.etls.find(etl => etl.etlID === etlObject.etlID);
+             const conversionFields = etlActual.conversion?.conversion || {}
+             if (!conversionFields.hasOwnProperty(columnName)) {                       // Si la columna no está en conversionFields, agregarla con operación 'null'
+             updateETLConversion(columnName, 'null');                                  // Agrega conversión por defecto
+             }
+
+              if (operationOptions) {
+                const row = document.createElement('tr');
+                const rowId = `row-${index}-${divETLPadreId1}-${columnName}`;                       // Genera un ID único usando el índice, id del etl al que pertences y el nombre de la coulman actual
+                row.id = rowId;                                                                     // Asigna el ID único a la fila
+                
+                row.innerHTML = `
+                  <td>${columnName}</td>
+                  <td>copy of ${columnName}</td>
+                  <td>${columnData.dataType}</td>
+                  <td>${columnData.length !== null ? columnData.length : ''}</td>
+                  <td>
+                  <select class="operation-select">
+                      ${operationOptions}
+                    </select>
+
+                     <div id="modal">
+                      <div id="modal-content">
+                        <h3>Selecciona las columnas a concatenar</h3>
+                        <div id="column-checkboxes">
+                          <!-- Los checkboxes de las columnas se agregarán dinámicamente aquí -->
+                        </div>
+                        <button id="close-modal">Cerrar</button>
+                      </div>
+                    </div>
+                  </td>
+                  </td>
+                `;
+                
+                
+                tableBody.appendChild(row);                                          // Agregar la fila a la tabla
+            
+                
+                row.addEventListener('click', function() {                           // Evento de clic en la fila para guardar el campo actual en localStorage
+                  localStorage.setItem('currentCampo', columnName);                  // Guarda el nombre del campo seleccionado
+                  console.log('Campo seleccionado:', columnName);
+                });
+
+                row.addEventListener('click', function(event) {
+                  const clickedRow = event.currentTarget;                            // event.currentTarget hace referencia a la fila (`tr`) que disparó el evento
+                  const rowId = clickedRow.id;                                       // Extrae el ID de la fila
+                  const columnName = clickedRow.querySelector('td').textContent;     // Captura el nombre de la columna (en la primera columna)
+                  console.log('ID de la fila seleccionada:', rowId, columnName);     // Imprime el ID en la consola
+                  
+                  localStorage.setItem('currentIdCampo', rowId);                     // Guarda el nombre del campo seleccionado
+                  console.log('Campo seleccionado:', columnName);
+                });
+
+                const selectElement = row.querySelector('.operation-select');         // Agregar el evento 'change' al select dentro de la fila actual
+                selectElement.addEventListener('change', function() {
+                  const selectedOperation = this.value;                               // Captura el valor seleccionado en el select
+                  console.log('Operación seleccionada:', selectedOperation);
+                  if (this.value === 'concat') {  
+                    generateModalConcat(columnData, sourceData);                      // Mostrar el modal si se selecciona la opción "conca t"
+                    updateETLConversion(columnName, selectedOperation);
+                    //processMissingConversions();                                      
+                  } else {
+                  
+                   updateETLConversion(columnName,  selectedOperation);
+                   //processMissingConversions();
+                 }                
+                  
+                });
+
+                
+              } 
+            });
+            
+          }            
+        } else {
+          console.log('No hay datos para mostrar para este etl ');
+        }  
+
+       
+    }if (typeOfBlockDraggedId == "draggable-destination") {
+      modalContentDiv.innerHTML = `<div class="modal-header">
+                    <h5 class="modal-title">Data conversion</h5>
+                    <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
+                  </div>
+                  <div class="modal-body">
+                    <h2>DATA CONVERSION</h2>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
+                  </div>`;
+    }
+      
+
+    function processNullSelections() {
+      dbConnection(this)
+      // Selecciona todas las filas de la tabla
+      const rows = document.querySelectorAll('tr');
+    
+      rows.forEach(row => {
+        const selectElement = row.querySelector('.operation-select');     // Encuentra el <select> dentro de la fila
+        
+        
+        if (selectElement && selectElement.value === 'null') {            // Verifica si el valor seleccionado es 'null'
+          const columnName = row.querySelector('td').textContent.trim();  // Captura el nombre de la columna
+          const selectedOperation = 'null';                               // Valor seleccionado
+  
+          updateETLConversion(columnName, selectedOperation);            // Llama a la función con el nombre de la columna y la operación 'null'
+          
+          console.log(`Columna "${columnName}" procesada con operación "${selectedOperation}"`);
+        }
+      });
+    }
+
+
+    //funcion para obtenr la acccion a realizar segun lo seleccinado para camda campo de una tabla propie de u etl 
+    function generateSQLQuery(columnName,selectedCampo2  , tableName , selectedOperation) {
+    let query = '';
+    campoName = columnName;
+
+    // Construcción de la consulta SQL según la acción
+    switch (selectedOperation) {
+        case 'null':
+            query = `SELECT ${columnName} FROM ${tableName}`;              // Selecciona la columna tal cual
+            break;
+        case 'uppercase':
+            query = `SELECT UPPER(${columnName})  FROM ${tableName}`;      // Convierte el valor de la columna a mayúsculas
+            break;
+        case 'lowercase':
+            query = `SELECT LOWER(${columnName}) FROM ${tableName}`;       // Convierte el valor de la columna a minúsculas
+            break;
+        case 'getMonth':
+            query = `SELECT MONTH(${columnName})  FROM ${tableName}`;      // Obtiene solo el mes de una columna de fecha
+            break;
+        case 'getYear':
+            query = `SELECT YEAR(${columnName})  FROM ${tableName}`;       // Obtiene solo el año de una columna de fecha
+            break;
+        case 'getDay':
+            query = `SELECT DAY(${columnName})  FROM ${tableName}`;        // Obtiene solo el día de una columna de fecha
+            break;
+        case 'getTime':
+            query = `SELECT HOUR(${columnName})  FROM ${tableName}`;       // Obtiene solo la hora de una columna de fecha
+            break;
+        case 'concat':
+            if (selectedCampo2) {
+                query = `SELECT CONCAT(${columnName}, ' ', ${selectedCampo2}) FROM ${tableName}`;    // Concatena dos columnas
+            } else {
+                query = 'Error: secondColumnName is required for CONCAT action.';
+            }
+            break;
+        default:
+            query = 'Error: Acción no reconocida.';
+            break;
+    }
+    return query;
+    }
+
+
+
+    // Función para actualizar el ETL con el atributo de conversión
+    function updateETLConversion(columnName,   selectedOperation ) {
+        const currentControlBlock = getCurrentControlBlock();                        // Recupera el bloque actual
+      
+        if (currentControlBlock && currentControlBlock.etls) {
+          const divETLPadreId = localStorage.getItem('currentETL'); 
+          const etlObject = JSON.parse(divETLPadreId);                               // Convierte la cadena JSON a objeto
+          const etlID = etlObject.etlID;                                             // Accede al valor de la propiedad etlID
+
+          console.log(etlID);                                                        // Muestra el resultado del id del etl
+          
+                                                                                      
+          currentControlBlock.etls = currentControlBlock.etls.map(etl => {            // Actualizar el ETL específico
+            if (etl.etlID === etlID) {
+              const tableName = etl.connectionParams?.table || 'undefined_table';     // Nombre de la tabla directo del ETL
+              let selectedCampo2 = localStorage.getItem('selectedCampo2') ;
+              console.log('este es el campo de m',selectedCampo2);
+              
+              const query = generateSQLQuery(columnName, selectedCampo2, tableName, selectedOperation); // Generar la consulta SQL usando la operación seleccionada
+      
+              const updatedConversion = {                                              // Crear o actualizar la estructura 'conversion'
+                nombre_tabla: tableName,
+                conversion: {
+                  ...etl.conversion?.conversion || {},                                 // Mantener conversiones anteriores
+                  [columnName]: { accion: query }                                      // Agregar o actualizar la nueva conversión
+                }
+
+                
+              };
+              console.log('localy  ' , updatedConversion);
+              return {                                                                 // Devolver el ETL actualizado con la nueva conversión
+                ...etl,
+                conversion: updatedConversion
+              };
+            }
+            return etl;                                                                // Si no coincide, devolver sin cambios
+          });
+          console.log('Antes de actualizar:', currentControlBlock);
+          let controlBlocks = JSON.parse(localStorage.getItem('controlBlocks')) || [];
+          controlBlocks = controlBlocks.map(block => 
+            block.id === currentControlBlock.id ? currentControlBlock : block
+          );
+
+          localStorage.setItem('controlBlocks', JSON.stringify(controlBlocks));         // Guardar el controlBlock actualizado en localStorage
+          console.log('ETL actualizado con la conversión:', currentControlBlock);
+        } else {
+          console.error('No se encontró el bloque actual o no tiene ETLs.');
+        }
+    }
+
+    function processMissingConversions() {
+        const currentControlBlock = getCurrentControlBlock();                        // Recupera el bloque actual
+        if (!currentControlBlock || !currentControlBlock.etls) {
+          console.error('No se encontró el bloque actual o no tiene ETLs.');
+          return;
+        }
+      
+        const divETLPadreId = localStorage.getItem('currentETL');
+        const etlObject = JSON.parse(divETLPadreId);                                 // Convierte la cadena JSON a objeto
+        const etlID = etlObject.etlID;                                               // Accede al valor de la propiedad etlID
+        const etlActual = currentControlBlock.etls.find(etl => etl.etlID === etlID); // Encuentra el ETL actual basado en el ID
+        if (!etlActual) {
+          console.error('ETL no encontrado.');
+          return;
+        }
+      
+        //                                                                            // Obtenemos los campos de origen desde 'source'
+        const sourceFields = etlActual.source || [];  
+        const sourceFieldsArray = Array.isArray(sourceFields)
+        ? sourceFields
+        : (sourceFields && typeof sourceFields === 'object')
+        ? Object.values(sourceFields)
+        : [sourceFields];                                                            // Lista de campos del ETL de origen, el etl actual 
+        if (!Array.isArray(sourceFieldsArray)) {
+          console.error('sourceFields no es un array:', sourceFields);
+          return;                                                                    // Sale del proceso si no es un array
+        }
+      
+        const conversionFields = etlActual.conversion?.conversion || {};              // Campos ya en conversión                                                                                         
+        const missingFields = sourceFieldsArray.filter(field => !conversionFields.hasOwnProperty(field));// Identifica campos que no están en la conversión
+        missingFields.forEach(field => {                                              // Procesa los campos faltantes con selectedOperation = null
+          console.log(`Procesando campo faltante: ${field}`);
+          updateETLConversion(field, 'null');                                         // Llama a la función con el nombre del campo y la operación 'null'
+        });
+      
+      
+
+      
     }
   }
-  if (typeOfBlockDraggedId == "draggable-destination") {
-    modalContentDiv.innerHTML = `<div class="modal-header">
-                  <h5 class="modal-title">Data conversion</h5>
-                  <button id="close-form-modal-btn" type="button" class="btn-close"  data-bs-dismiss="modal" aria-label="Close" onclick="toggleModal()"></button>
-                </div>
-                <div class="modal-body">
-                  <h2>DATA CONVERSION</h2>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-primary" onclick="dbConnection(this)" data-bs-toggle="modal" data-bs-target="#staticBackdrop">OK</button>
-                </div>`;
+
+  
+
+
+
+//modal para selecciona el otro campo con el que se va ha concatenar 
+function generateModalConcat(columnData, sourceData) {
+  let existingModal = document.getElementById('myModal');
+  if (existingModal) {
+    existingModal.remove();
   }
+
+  const modalContainer = document.createElement('div');
+  modalContainer.id = 'myModal';
+  modalContainer.className = 'modal2';
+  modalContainer.innerHTML = `
+    <div class="modal-concat">
+      <span class="close">&times;</span>
+      <h5>Selecciona campos a concatenar</h5>
+      <select id="mainSelect" class= "second-campo-concat"></select>
+      <div id="checkboxContainer"></div>
+      <button id="confirmBtn">Confirmar</button>
+    </div>
+  `;
+
+  document.body.appendChild(modalContainer);
+
+  // Llenar el select con las claves de 'sourceData'
+  const selectElement = modalContainer.querySelector('#mainSelect');
+  selectElement.innerHTML = `<option value="">Selecciona un campo</option>`;
+  Object.keys(sourceData).forEach(category => {
+    const option = document.createElement('option');
+    option.value = category;
+    option.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    selectElement.appendChild(option);
+  });
+
+ 
+ const selectElement2ToConcat = modalContainer.querySelector('.second-campo-concat');        // Aquí verifica de que el modal ya está en el DOM antes de agregar el evento
+ if (selectElement2ToConcat) {                                                               // Verificamos si el select existe antes de agregar el event listener      
+   selectElement2ToConcat.addEventListener('change', function() {
+      let selectedCampo2 = this.value;                                                       // Captura el valor seleccionado en el select
+      localStorage.setItem('selectedCampo2', selectedCampo2);                                // se Guarda en localStorage
+     console.log('Segundo campo seleccionado:', selectedCampo2);
+     
+   });
+ } else {
+   console.error('El select no está disponible para agregar el evento.');
+ }
+  
+
+  // Evento de cierre del modal
+  const closeBtn = modalContainer.querySelector('.close');
+  closeBtn.onclick = () => { modalContainer.style.display = 'none'; }
+
+  // Mostrar el modal
+  modalContainer.style.display = 'block';
+
+
+  
+    // Manejar el clic en el botón "Confirmar"
+    const confirmBtn = modalContainer.querySelector('#confirmBtn');
+    confirmBtn.onclick = function() {
+    // Obtener los campos seleccionados
+    const selectedFields = [];
+    const checkboxes = document.querySelectorAll('#checkboxContainer input[type="checkbox"]:checked');
+    checkboxes.forEach(checkbox => {
+      selectedFields.push(checkbox.value);
+    });
+  
+   
+      // Cerrar el modal
+      modalContainer.style.display = 'none';
+      console.log('Datos de concatenación guardados:');
+    
+  };
 }
+
+}
+
+// Función  para obtener opciones según el tipo de dato
+function getOperationOptions(dataType) {
+  if (dataType.includes('char') || dataType.includes('varchar')) {      // Operaciones para cadenas
+    
+    return `
+      <option value="null"> -------- </option>
+      <option value="uppercase">Uppercase</option>
+      <option value="lowercase">Lowercase</option>
+      <option value="concat">Concatenate</option>
+    `;
+  } else if (dataType.includes('date') || dataType.includes('time')) {    // Operaciones para fechas
+    
+    return `
+      <option value="null"> -------- </option>
+      <option value="getDay">Get Day</option>
+      <option value="getMonth">Get Month</option>
+      <option value="getYear">Get Year</option>
+      <option value="getTime">Get Time</option>
+      <option value="concat">Concatenate</option>
+    `;
+  } else if (dataType.includes('int') || dataType.includes('float')) {
+    
+    return `
+      <option value="null"> -------- </option>
+      <option value="concat">Concatenate</option>
+      
+    `;
+  }
+  return '';  // Devolver vacío si no hay operaciones válidas
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function toggleModal(target, typeOfBlockDraggedId) {
   setModalHtmlContent(typeOfBlockDraggedId);
