@@ -32,27 +32,49 @@ export class DataFlow {
         }
     }
 
+    static async getMultipleTablesMetadata (columnTableMappings){
+        try {
+            let source = { };
+            for (let table in columnTableMappings){
+                if (columnTableMappings[table].length > 0){
+                    let result = await connectionPool.request().query(`SELECT COLUMN_NAME AS columnName,
+                        DATA_TYPE AS dataType, CHARACTER_MAXIMUM_LENGTH AS length, NUMERIC_PRECISION AS precision 
+                        FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${table}' AND COLUMN_NAME IN (${columnTableMappings[table].join(",")});`);
+                    let formatedData = this.format_metadata(result.recordset);
+                    source = { ...source, ...JSON.parse(JSON.stringify(formatedData.source)) };
+                }
+            }
+            return source;
+        } catch (error) {
+            console.log(error);
+        }
+    }
+
     static parseSQLQuery(sqlCommand){
         const result = {
             tableName: null,
             fields: [],
             joinedTables: []
         };
-        const fieldsRegex = /SELECT\s+(.*?)\s+FROM/i;
+        // const fieldsRegex = /SELECT\s+(.*?)\s+FROM/i;
+        const fieldsRegex = /SELECT.*FROM/gi;
         const fieldsMatch = sqlCommand.match(fieldsRegex);
-        if (fieldsMatch && fieldsMatch[1]){
-            result.fields = fieldsMatch[1].split(",").map((field) => field.trim());
+        if (fieldsMatch && fieldsMatch[0]){
+            // remove SELECT and FROM
+            const fieldArray = fieldsMatch[0].slice(7,-5);
+            result.fields = fieldArray.split(",").map((field) => field.trim());
         }
 
-        const fromRegex = /FROM\s+([^\s;]+)/i;
-        const fromMatch = query.match(fromRegex);
-        if (fromMatch && fromMatch[1]) {
-            result.tableName = fromMatch[1].trim();
+        const fromRegex = /FROM\s+([^\s;]+)/gi;
+        const fromMatch = sqlCommand.match(fromRegex);
+        if (fromMatch && fromMatch[0]) {
+            const mainTable = fromMatch[0].slice(4);
+            result.tableName = mainTable.trim();
         }
 
         const joinRegex = /JOIN\s+([^\s]+)\s+/gi;
         let joinMatch;
-        while ((joinMatch = joinRegex.exec(query)) !== null) {
+        while ((joinMatch = joinRegex.exec(sqlCommand)) !== null) {
             result.joinedTables.push(joinMatch[1].trim());
         }
 
@@ -63,15 +85,29 @@ export class DataFlow {
     static async connection(req,res){
         try {
             const { user, password, server, dataBase, sqlCommand, table, method  } = req.body;
-            var queryResult;
             if (method==='table'){
-                queryResult = await DataFlow.getTableMetadata(table);
+                let queryResult = await DataFlow.getTableMetadata(table);
                 res.status(200).json({message: `Informacion de la tabla ${table}`, testQueryResult: queryResult});
             }else{
+                const pool = await connect(user,password,server,dataBase);
+                connectionPool = pool;
                 // invocar funcion para extraer campos y tablas del sqlCommand
                 let queryTables = DataFlow.parseSQLQuery(sqlCommand);
                 // extraer la metadata de cada tabla
-                queryResult = await DataFlow.getTableMetadata(queryTables);
+                let columnTableMappings = { };
+                
+                columnTableMappings[queryTables.tableName] = queryTables.fields
+                .filter ((columnName) =>  columnName.includes(`${queryTables.tableName}.`) )
+                .map ((fieldName) =>  `'${fieldName.slice(fieldName.indexOf(".")+1)}'` )
+
+                queryTables.joinedTables.forEach((table) => {
+                    columnTableMappings[table] = queryTables.fields
+                    .filter ((columnName) =>  columnName.includes(`${table}.`) )
+                    .map ((fieldName) =>  `'${fieldName.slice(fieldName.indexOf(".")+1)}'` )
+                })
+                
+                let queryResult = { };
+                queryResult["source"] = await DataFlow.getMultipleTablesMetadata(columnTableMappings);
                 res.status(200).json({message: 'conexion exitosa', testQueryResult: queryResult});
             }
         } catch (error) {
