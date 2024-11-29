@@ -26,7 +26,26 @@ function extractData() {
 function alternativeCloseModal(button) {
   toggleModal(button)
 }
+/*
+async function dbConnection() {
+  var formData = extractData();
 
+  
+    
+    let controlFlowInfo = JSON.parse(
+      window.localStorage.getItem("controlBlocks")
+    ); // obtiene el objeto de controlFLow
+    // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
+    let currentControlBlockId = window.localStorage.getItem("controlBlockId");
+    for (let object of controlFlowInfo) {
+      if (object.id === currentControlBlockId) {
+        object.etls.push(ETLObject);
+      }
+    }
+    
+
+   
+}*/
 async function dbConnection() {
   var formData = extractData();
 
@@ -38,25 +57,52 @@ async function dbConnection() {
       },
       body: JSON.stringify(formData),
     });
+
     const result = await response.json();
+
+    // Obtener el objeto ETL actual
     let ETLObject = JSON.parse(window.localStorage.getItem("currentETL")); //obtiene el objeto del ETL actual
     ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
     ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
-    let controlFlowInfo = JSON.parse(
-      window.localStorage.getItem("controlBlocks")
-    ); // obtiene el objeto de controlFLow
-    // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
+
+    // Obtener el objeto controlFlow
+    let controlFlowInfo = JSON.parse(window.localStorage.getItem("controlBlocks"));
     let currentControlBlockId = window.localStorage.getItem("controlBlockId");
+
+    // Buscar el bloque actual en controlFlowInfo, solo para gestinoar culquier eror 
+    let blockFound = false;
+
     for (let object of controlFlowInfo) {
       if (object.id === currentControlBlockId) {
-        object.etls.push(ETLObject);
+        // Verificar si ya existe un ETL con el mismo ID
+        let existingETL = object.etls.find(etl => etl.id === ETLObject.id);
+        
+        if (existingETL) {
+          // Si existe, actualiza sus campos
+          existingETL.source = ETLObject.source;
+          existingETL.connectionParams = ETLObject.connectionParams;
+        } else {
+          // Si no existe, añade el nuevo ETL
+          object.etls.push(ETLObject);
+        }
+        
+        blockFound = true;
+        break;
       }
     }
+
+    if (!blockFound) {
+      alert("Error: No se encontró el bloque de control actual.");
+      return;
+    }
+
+    // Guardar la información actualizada en localStorage
     // controlFlowInfo.etls.push(ETLObject); // le acopla el objeto del ETL con la informacion nueva
     window.localStorage.setItem(
       "controlBlocks",
       JSON.stringify(controlFlowInfo)
     ); // vuelve a guardar el objeto de controlFlow con la nueva informacion
+
 
     toggleModal(this); //cierra la modal de formulario de conexion
     notificationModal.querySelector(".modal-body").innerText = result.message; // escribe el mensaje de respuesta en el cuerpo de la modal
