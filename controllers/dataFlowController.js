@@ -82,39 +82,68 @@ export class DataFlow {
 
     }
 
-    static async connection(req,res){
+    static async connection(req, res) {
         try {
-            const { user, password, server, dataBase, sqlCommand, table, method  } = req.body;
-            if (method==='table'){
-                let queryResult = await DataFlow.getTableMetadata(table);
-                res.status(200).json({message: `Informacion de la tabla ${table}`, testQueryResult: queryResult});
-            }else{
-                const pool = await connect(user,password,server,dataBase);
-                connectionPool = pool;
-                // invocar funcion para extraer campos y tablas del sqlCommand
-                let queryTables = DataFlow.parseSQLQuery(sqlCommand);
-                // extraer la metadata de cada tabla
-                let columnTableMappings = { };
-                
-                columnTableMappings[queryTables.tableName] = queryTables.fields
-                .filter ((columnName) =>  columnName.includes(`${queryTables.tableName}.`) )
-                .map ((fieldName) =>  `'${fieldName.slice(fieldName.indexOf(".")+1)}'` )
-
-                queryTables.joinedTables.forEach((table) => {
-                    columnTableMappings[table] = queryTables.fields
-                    .filter ((columnName) =>  columnName.includes(`${table}.`) )
-                    .map ((fieldName) =>  `'${fieldName.slice(fieldName.indexOf(".")+1)}'` )
-                })
-                
-                let queryResult = { };
-                queryResult["source"] = await DataFlow.getMultipleTablesMetadata(columnTableMappings);
-                res.status(200).json({message: 'conexion exitosa', testQueryResult: queryResult});
-            }
+          const { user, password, server, dataBase, sqlCommand, table, method } = req.body;
+      
+          // Validación de los datos requeridos
+          if (!user || !password || !server || !dataBase || !method) {
+            return res.status(400).json({ message: "Faltan datos en el body" });
+          }
+      
+          if (method === "table" && !table) {
+            return res.status(400).json({ message: "Falta el nombre de la tabla para el método 'table'" });
+          }
+      
+          if (method === "sqlCommand" && !sqlCommand) {
+            return res.status(400).json({ message: "Falta el comando SQL para el método 'sqlCommand'" });
+          }
+      
+          if (method === "table") {
+            const queryResult = await DataFlow.getTableMetadata(table);
+            console.log("Resultado de las tablas obtenidas:", queryResult);
+            return res.status(200).json({
+              message: `Información de la tabla ${table}`,
+              testQueryResult: queryResult,
+            });
+          } else if (method === "sqlCommand") {
+            // Conexión a la base de datos
+            const pool = await connect(user, password, server, dataBase);
+            connectionPool = pool;
+      
+            // Parsear el comando SQL para obtener información de tablas y columnas
+            const queryTables = DataFlow.parseSQLQuery(sqlCommand);
+      
+            // Mapear las tablas y columnas extraídas del comando SQL
+            const columnTableMappings = {
+              [queryTables.tableName]: queryTables.fields
+                .filter((columnName) => columnName.includes(`${queryTables.tableName}.`))
+                .map((fieldName) => `'${fieldName.slice(fieldName.indexOf(".") + 1)}'`),
+            };
+      
+            queryTables.joinedTables.forEach((table) => {
+              columnTableMappings[table] = queryTables.fields
+                .filter((columnName) => columnName.includes(`${table}.`))
+                .map((fieldName) => `'${fieldName.slice(fieldName.indexOf(".") + 1)}'`);
+            });
+      
+            // Obtener metadatos de todas las tablas relacionadas
+            const queryResult = {
+              source: await DataFlow.getMultipleTablesMetadata(columnTableMappings),
+            };
+      
+            return res.status(200).json({
+              message: "Conexión exitosa",
+              testQueryResult: queryResult,
+            });
+          }
         } catch (error) {
-            console.log("Error de conexión: ", error);
-            res.status(400).json({message: 'Sucedió un error durante la conexión'})
+          console.log("Error de conexión: ", error);
+          return res.status(400).json({ message: "Sucedió un error durante la conexión" });
         }
-    }
+      }
+      
+      
 
 
     static async  getTableNames(req,res){
