@@ -100,8 +100,11 @@ export class DataFlow {
           }
       
           if (method === "table") {
+            const pool = await connect(user, password, server, dataBase);
+            connectionPool = pool;
             const queryResult = await DataFlow.getTableMetadata(table);
             console.log("Resultado de las tablas obtenidas:", queryResult);
+            pool.close();
             return res.status(200).json({
               message: `Información de la tabla ${table}`,
               testQueryResult: queryResult,
@@ -116,7 +119,7 @@ export class DataFlow {
       
             // Mapear las tablas y columnas extraídas del comando SQL
             const columnTableMappings = {
-              [queryTables.tableName]: queryTables.fields
+              [queryTables.tableName] : queryTables.fields
                 .filter((columnName) => columnName.includes(`${queryTables.tableName}.`))
                 .map((fieldName) => `'${fieldName.slice(fieldName.indexOf(".") + 1)}'`),
             };
@@ -131,7 +134,8 @@ export class DataFlow {
             const queryResult = {
               source: await DataFlow.getMultipleTablesMetadata(columnTableMappings),
             };
-      
+            
+            pool.close();
             return res.status(200).json({
               message: "Conexión exitosa",
               testQueryResult: queryResult,
@@ -153,11 +157,26 @@ export class DataFlow {
             connectionPool = pool;
             var queryResult = await pool.request().query(`SELECT table_name 
                 FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' AND 
-                table_name != 'sysdiagrams'; `);
+                table_name != 'sysdiagrams' AND DB_NAME() = '${dataBase}' ; `);
             res.status(200).json({message: 'Se obtuvieron las tablas de la base de datos', 
                 testQueryResult: queryResult})
         } catch (error) {
             console.log(error);
+        }
+    }
+
+    static async getDestinationMetadata (req, res){
+        try {
+            const { user, password, server, dataBase, tableName } = req.body;
+            const pool = await connect(user,password,server,dataBase);
+            connectionPool = pool;
+            let formatedData = await DataFlow.getTableMetadata(tableName);
+            pool.close();
+            res.status(200).json({message: 'Se obtuvieron las columnas de la tabla de destino', 
+                testQueryResult: formatedData});
+        } catch (error) {
+            console.log(error);
+            console.log(`Error al obtener las columnas de la tabla ${tableName}`)
         }
     }
 
