@@ -128,6 +128,7 @@ async function checkSelectValue() {
     const queryResult = await extractTableNames();
 
     console.log(queryResult);
+
     for (let table of queryResult.recordset) {
       let tableOption = document.createElement("option");
       tableOption.value = table.table_name;
@@ -760,6 +761,81 @@ renderEtls();
 
 //Sammy
 // Modal de configuración del destino
+async function displayColumnMapping(){
+  console.log("cambio de valor!!!");
+  const serverName = document.getElementById("destServerName").value;
+  const dbName = document.getElementById("destDbName").value;
+  const userName = document.getElementById("destUserName").value;
+  const password = document.getElementById("destPassword").value;
+  const tableName = document.getElementById("destTableName").value;
+  const destTableDisplay = document.getElementById("destinationColumnMapping");
+
+
+
+  if (tableName !== "Selecciona una tabla"){
+    try {
+      const response = await fetch("/destTableMetadata", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user: userName,
+          password: password,
+          server: serverName,
+          dataBase: dbName,
+          tableName: tableName
+        }),
+      });
+
+      const result = await response.json();
+      
+      console.log(result.testQueryResult.source);
+      // insertanto columnas de destino
+      Object.keys(result.testQueryResult.source).forEach((colName) => {
+        const newRow = document.createElement("tr");
+        const newOriginCell = document.createElement("td");
+        newOriginCell.classList.add("source-column");
+
+        const newOriginSelect = document.createElement("select");
+        const newDestCell = document.createElement("td");
+        newDestCell.classList.add("destination-column");
+
+        const ignoreOption = document.createElement("option");
+        ignoreOption.value = "ignorar";
+        ignoreOption.innerText = "ignorar";
+        newOriginSelect.appendChild(ignoreOption);
+
+        //extraer las columnas de destino de localStorage
+        const controlBlockId = window.localStorage.getItem("controlBlockId");
+        const controlBlock = JSON.parse(window.localStorage.getItem("controlBlocks")).find((blockObj) => blockObj.id === controlBlockId );
+        const currentETl = controlBlock.etls.find((obj) => obj.etlID === JSON.parse(window.localStorage.getItem("currentETL")).etlID );
+        Object.keys(currentETl.conversion.conversion).forEach((columnName) => {
+          const newOption = document.createElement("option");
+          newOption.value = columnName;
+          newOption.innerText = columnName;
+          newOriginSelect.appendChild(newOption);
+        });
+        
+        
+        newOriginCell.appendChild(newOriginSelect);
+        
+        newDestCell.innerText = colName;
+
+        newRow.appendChild(newOriginCell);
+        newRow.appendChild(newDestCell);
+
+        destTableDisplay.appendChild(newRow);
+
+      });
+
+    } catch(error) {
+      console.log(error);
+    }
+  }
+}
+
+
 function openDestinationModal(destinationBlock) {
   const modalContentDiv = formModal.querySelector(".modal-content");
 
@@ -792,7 +868,7 @@ function openDestinationModal(destinationBlock) {
       </div>
       <div class="mb-3">
         <label for="destTableName" class="form-label">Tabla de Destino</label>
-        <select class="form-select" id="destTableName">
+        <select class="form-select" id="destTableName" >
           <option value="">Selecciona una tabla</option>
         </select>
       </div>
@@ -818,7 +894,13 @@ function openDestinationModal(destinationBlock) {
   // Mostrar la modal
   formModal.classList.add("show");
   formModal.style.display = "block";
+  const nodo = document.getElementById("destTableName");
+  nodo.addEventListener("change", displayColumnMapping);
+  console.log(nodo);
 }
+
+
+
 
 // Función para conectar al destino y traer tablas
 async function connectToDestination() {
@@ -826,40 +908,58 @@ async function connectToDestination() {
   const dbName = document.getElementById("destDbName").value;
   const userName = document.getElementById("destUserName").value;
   const password = document.getElementById("destPassword").value;
-
-  if (!serverName || !dbName || !userName || !password) {
+  
+  if (!serverName || !dbName || !userName || !password ) {
     alert("Por favor, completa todos los campos de conexión.");
     return;
   }
 
   try {
-    const response = await fetch("/connect", {
+    const response = await fetch("/tableNames", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ server: serverName, dataBase: dbName, user: userName, password }),
+      body: JSON.stringify({
+        user: userName,
+        password: password,
+        server: serverName,
+        dataBase: dbName,
+      }),
     });
 
     const result = await response.json();
-    const tableSelect = document.getElementById("destTableName");
 
-    if (result.testQueryResult && result.testQueryResult.tables) {
+    if (response.status !== 200 || !result.testQueryResult) {
+      alert(result.message || "Error al conectar con el servidor.");
+      return;
+    }
+
+    console.log("Respuesta del backend:", result);
+
+    if (result.testQueryResult) {
+      const tableSelect = document.getElementById("destTableName");
       tableSelect.innerHTML = `<option value="">Selecciona una tabla</option>`;
-      result.testQueryResult.tables.forEach((table) => {
+
+      const tables = result.testQueryResult.recordset;
+      if (tables.length === 0) {
+        alert("No se encontraron tablas disponibles en la base de datos.");
+        return;
+      }
+
+      tables.forEach((tableObject) => {
         const option = document.createElement("option");
-        option.value = table.name;
-        option.textContent = table.name;
+        option.value = tableObject.table_name;
+        option.innerText = tableObject.table_name;
         tableSelect.appendChild(option);
       });
-    } else {
-      alert("No se encontraron tablas disponibles.");
     }
   } catch (error) {
     console.error("Error al conectar al destino:", error);
     alert("Error al conectar al destino.");
   }
 }
+
 
 // Guardar configuración del destino
 function saveDestinationConfig() {
@@ -876,42 +976,45 @@ function saveDestinationConfig() {
 
   const columnMappings = Array.from(
     document.querySelectorAll("#destinationColumnMapping tr")
-  ).map((row) => {
-    const sourceColumn = row.querySelector(".source-column").textContent;
-    const destinationColumn = row.querySelector(".destination-column").value;
+  )
 
-    return { sourceColumn, destinationColumn };
-  });
-
-  const currentControlBlockId = localStorage.getItem("controlBlockId");
   const controlBlocks = JSON.parse(localStorage.getItem("controlBlocks"));
-  const currentControlBlock = controlBlocks.find(
-    (block) => block.id === currentControlBlockId
-  );
+  const controlBlockId = window.localStorage.getItem("controlBlockId");
+  const controlBlock = controlBlocks.find((blockObj) => blockObj.id === controlBlockId );
+  const currentETL = controlBlock.etls.find((obj) => obj.etlID === JSON.parse(window.localStorage.getItem("currentETL")).etlID );
+  const conversion = currentETL.conversion.conversion;
+  
 
-  const currentETL = JSON.parse(localStorage.getItem("currentETL"));
-  const queries = columnMappings.map((mapping) => {
-    return `LOWER(${mapping.sourceColumn}) AS ${mapping.destinationColumn}`;
+  const sourceSelects = document.querySelectorAll(".source-column");
+  const helper = [];
+  columnMappings.forEach((row, index) => {
+    const conversionKey = sourceSelects[index].firstChild.value;
+    const sourceColumn = conversion[conversionKey].accion;
+    const destinationColumn = row.querySelector(".destination-column").innerText;
+    helper.push({ sourceColumn: sourceColumn, destinationColumn:destinationColumn });
+  })
+  
+
+  const queries = helper.map((mapping) => {
+    return `${mapping.sourceColumn} AS ${mapping.destinationColumn}`;
   });
+  console.log(helper);
+  
 
-  const query = `SELECT ${queries.join(", ")} FROM ${localStorage.getItem("sourceTable")}`;
+  const query = `SELECT ${queries.join(", ")} FROM ${currentETL.connectionParams.table}`;
 
   const destinationConfig = {
     etlID: currentETL.etlID,
-    tabla: localStorage.getItem("sourceTable"),
+    tabla: currentETL.connectionParams.table,
     query,
     destinoTable: destTableName,
     connection: { serverName, dbName, userName, password },
   };
 
-  currentETL.destination = destinationConfig;
-
-  currentControlBlock.etls = currentControlBlock.etls.map((etl) =>
-    etl.etlID === currentETL.etlID ? currentETL : etl
-  );
+  currentETL["destination"] = destinationConfig;
 
   localStorage.setItem("controlBlocks", JSON.stringify(controlBlocks));
-
+  console.log(currentETL);
   toggleModal();
   alert("Configuración de destino guardada correctamente.");
 }
