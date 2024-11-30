@@ -826,32 +826,69 @@ async function connectToDestination() {
   const dbName = document.getElementById("destDbName").value;
   const userName = document.getElementById("destUserName").value;
   const password = document.getElementById("destPassword").value;
+  const method = document.querySelector("input[name='method']:checked")?.value || "table";
+  const table = method === "table" ? document.getElementById("destTableName").value : null;
+  const sqlCommand = method === "sqlCommand" ? document.getElementById("destSqlCommand").value : null;
 
-  if (!serverName || !dbName || !userName || !password) {
+  if (!serverName || !dbName || !userName || !password || !method) {
     alert("Por favor, completa todos los campos de conexión.");
     return;
   }
 
+  if (method === "table" && !table) {
+    alert("Por favor, selecciona una tabla.");
+    return;
+  }
+
+  if (method === "sqlCommand" && !sqlCommand) {
+    alert("Por favor, ingresa un comando SQL.");
+    return;
+  }
+
   try {
-    const response = await fetch("/connect", {
+    const response = await fetch("/tableNames", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ server: serverName, dataBase: dbName, user: userName, password }),
+      body: JSON.stringify({
+        server: serverName,
+        dataBase: dbName,
+        user: userName,
+        password: password,
+        method: method,
+        table: table,
+        sqlCommand: sqlCommand,
+      }),
     });
 
     const result = await response.json();
-    const tableSelect = document.getElementById("destTableName");
 
-    if (result.testQueryResult && result.testQueryResult.tables) {
+    if (response.status !== 200 || !result.testQueryResult) {
+      alert(result.message || "Error al conectar con el servidor.");
+      return;
+    }
+
+    console.log("Respuesta del backend:", result);
+
+    if (method === "table" && result.testQueryResult && result.testQueryResult.source) {
+      const tableSelect = document.getElementById("destTableName");
       tableSelect.innerHTML = `<option value="">Selecciona una tabla</option>`;
-      result.testQueryResult.tables.forEach((table) => {
+
+      const tables = Object.keys(result.testQueryResult.source);
+      if (tables.length === 0) {
+        alert("No se encontraron tablas disponibles en la base de datos.");
+        return;
+      }
+
+      tables.forEach((table) => {
         const option = document.createElement("option");
-        option.value = table.name;
-        option.textContent = table.name;
+        option.value = table;
+        option.textContent = table;
         tableSelect.appendChild(option);
       });
+    } else if (method === "sqlCommand") {
+      alert("Conexión exitosa con SQL Command.");
     } else {
       alert("No se encontraron tablas disponibles.");
     }
@@ -860,6 +897,7 @@ async function connectToDestination() {
     alert("Error al conectar al destino.");
   }
 }
+
 
 // Guardar configuración del destino
 function saveDestinationConfig() {
