@@ -396,29 +396,29 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
     // Construcción de la consulta SQL según la acción
     switch (selectedOperation) {
         case 'null':
-            query = `SELECT ${columnName} FROM ${tableName}`;              // Selecciona la columna tal cual
+            query = `${columnName}`;              // Selecciona la columna tal cual
             break;
         case 'uppercase':
-            query = `SELECT UPPER(${columnName})  FROM ${tableName}`;      // Convierte el valor de la columna a mayúsculas
+            query = `UPPER(${columnName})`;      // Convierte el valor de la columna a mayúsculas
             break;
         case 'lowercase':
-            query = `SELECT LOWER(${columnName}) FROM ${tableName}`;       // Convierte el valor de la columna a minúsculas
+            query = `LOWER(${columnName})`;       // Convierte el valor de la columna a minúsculas
             break;
         case 'getMonth':
-            query = `SELECT MONTH(${columnName})  FROM ${tableName}`;      // Obtiene solo el mes de una columna de fecha
+            query = `MONTH(${columnName})`;      // Obtiene solo el mes de una columna de fecha
             break;
         case 'getYear':
-            query = `SELECT YEAR(${columnName})  FROM ${tableName}`;       // Obtiene solo el año de una columna de fecha
+            query = `YEAR(${columnName})`;       // Obtiene solo el año de una columna de fecha
             break;
         case 'getDay':
-            query = `SELECT DAY(${columnName})  FROM ${tableName}`;        // Obtiene solo el día de una columna de fecha
+            query = `DAY(${columnName})`;        // Obtiene solo el día de una columna de fecha
             break;
         case 'getTime':
-            query = `SELECT HOUR(${columnName})  FROM ${tableName}`;       // Obtiene solo la hora de una columna de fecha
+            query = `HOUR(${columnName})`;       // Obtiene solo la hora de una columna de fecha
             break;
         case 'concat':
             if (selectedCampo2) {
-                query = `SELECT CONCAT(${columnName}, ' ', ${selectedCampo2}) FROM ${tableName}`;    // Concatena dos columnas
+                query = `CONCAT(${columnName}, ' ', ${selectedCampo2})`;    // Concatena dos columnas
             } else {
                 query = 'Error: secondColumnName is required for CONCAT action.';
             }
