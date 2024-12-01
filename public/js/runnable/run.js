@@ -8,7 +8,7 @@ function getInfoArray() {
 
 async function run() {
   const data = getInfoArray()
-  alertState(data)
+  // alertState(data)
   if (!data)
     return
 
@@ -26,12 +26,12 @@ async function run() {
 }
 
 
-function alertState(data) {
-  if (!data)
-    alert('No hay datos actuales')
-  else
-    alert('Corriendo proyecto...')
-}
+// function alertState(data) {
+//   if (!data)
+//     alert('No hay datos actuales')
+//   else
+//     alert('Corriendo proyecto...')
+// }
 
 /**
  * 
