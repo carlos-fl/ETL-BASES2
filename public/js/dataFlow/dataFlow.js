@@ -38,52 +38,26 @@ async function dbConnection() {
       },
       body: JSON.stringify(formData),
     });
-
     const result = await response.json();
-
-    // Obtener el objeto ETL actual
     let ETLObject = JSON.parse(window.localStorage.getItem("currentETL")); //obtiene el objeto del ETL actual
     ETLObject["source"] = result.testQueryResult.source; // le acopla la informacion de la tabla
     ETLObject["connectionParams"] = formData; // le acopla la informacion de la conexion
-
-    // Obtener el objeto controlFlow
-    let controlFlowInfo = JSON.parse(window.localStorage.getItem("controlBlocks"));
+    let controlFlowInfo = JSON.parse(
+      window.localStorage.getItem("controlBlocks")
+    ); // obtiene el objeto de controlFLow
+    // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
     let currentControlBlockId = window.localStorage.getItem("controlBlockId");
-
-    // Buscar el bloque actual en controlFlowInfo, solo para gestinoar culquier eror 
-    let blockFound = false;
 
     for (let object of controlFlowInfo) {
       if (object.id === currentControlBlockId) {
-        // Verificar si ya existe un ETL con el mismo ID
-        let existingETL = object.etls.find(etl => etl.id === ETLObject.id);
-        
-        if (existingETL) {
-          // Si existe, actualiza sus campos
-          existingETL.source = ETLObject.source;
-          existingETL.connectionParams = ETLObject.connectionParams;
-        } else {
-          // Si no existe, añade el nuevo ETL
-          object.etls.push(ETLObject);
-        }
-        
-        blockFound = true;
-        break;
+        object.etls.push(ETLObject);
       }
     }
-
-    if (!blockFound) {
-      alert("Error: No se encontró el bloque de control actual.");
-      return;
-    }
-
-    // Guardar la información actualizada en localStorage
     // controlFlowInfo.etls.push(ETLObject); // le acopla el objeto del ETL con la informacion nueva
     window.localStorage.setItem(
       "controlBlocks",
       JSON.stringify(controlFlowInfo)
     ); // vuelve a guardar el objeto de controlFlow con la nueva informacion
-
 
     toggleModal(this); //cierra la modal de formulario de conexion
     notificationModal.querySelector(".modal-body").innerText = result.message; // escribe el mensaje de respuesta en el cuerpo de la modal
@@ -128,7 +102,6 @@ async function checkSelectValue() {
     const queryResult = await extractTableNames();
 
     console.log(queryResult);
-
     for (let table of queryResult.recordset) {
       let tableOption = document.createElement("option");
       tableOption.value = table.table_name;
@@ -254,7 +227,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
           if (controlFlowInfo && currentControlBlockId) {      
             const currentControlBlock = controlFlowInfo.find(block => block.id === currentControlBlockId);         // Buscar el bloque con el ID correspondiente
             if (currentControlBlock) {
-              //console.log("Bloque actual encontrado:", currentControlBlock);
+              console.log("Bloque actual encontrado:", currentControlBlock);
               return currentControlBlock;                                                                          // Retorna el objeto del bloque actual
             } else {
               console.error("No se encontró el bloque de control con ID:", currentControlBlockId);
@@ -287,7 +260,6 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
            } else {
               const sourceData  = filteredETL[0].source; 
               const tableBody = document.getElementById('tbody');
-              console.log('este es el source de la tabla actual', sourceData);
               tableBody.innerHTML = "";
 
            
@@ -306,7 +278,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
              const etlActual = currentControlBlock.etls.find(etl => etl.etlID === etlObject.etlID);
              const conversionFields = etlActual.conversion?.conversion || {}
              if (!conversionFields.hasOwnProperty(columnName)) {                       // Si la columna no está en conversionFields, agregarla con operación 'null'
-             updateETLConversion(columnName, 'null', 'null');                                  // Agrega conversión por defecto
+             updateETLConversion(columnName, 'null');                                  // Agrega conversión por defecto
              }
 
               if (operationOptions) {
@@ -350,28 +322,32 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   const clickedRow = event.currentTarget;                            // event.currentTarget hace referencia a la fila (`tr`) que disparó el evento
                   const rowId = clickedRow.id;                                       // Extrae el ID de la fila
                   const columnName = clickedRow.querySelector('td').textContent;     // Captura el nombre de la columna (en la primera columna)
-                 // console.log('ID de la fila seleccionada:', rowId, columnName);     // Imprime el ID en la consola
+                  console.log('ID de la fila seleccionada:', rowId, columnName);     // Imprime el ID en la consola
                   
                   localStorage.setItem('currentIdCampo', rowId);                     // Guarda el nombre del campo seleccionado
-                  //console.log('Campo seleccionado:', columnName);
+                  console.log('Campo seleccionado:', columnName);
                 });
 
                 const selectElement = row.querySelector('.operation-select');         // Agregar el evento 'change' al select dentro de la fila actual
                 selectElement.addEventListener('change', function() {
                   const selectedOperation = this.value;                               // Captura el valor seleccionado en el select
                   console.log('Operación seleccionada:', selectedOperation);
-                  if (this.value === 'concat') { 
-                     
-                    generateModalConcat( sourceData, columnName, selectedOperation);    // Mostrar el modal si se selecciona la opción "conca t" 
-                   
+                  if (this.value === 'concat') {  
+                    generateModalConcat(columnData, sourceData);                      // Mostrar el modal si se selecciona la opción "conca t"
+                    updateETLConversion(columnName, selectedOperation);
+                    //processMissingConversions();                                      
                   } else {
-                    let selectedCampo2 = localStorage.getItem('selectedCampo2') 
-                   updateETLConversion(columnName,  selectedOperation, selectedCampo2);
-                   
+                  
+                   updateETLConversion(columnName,  selectedOperation);
+                   //processMissingConversions();
                  }                
-                }); 
-              }  
-            });  
+                  
+                });
+
+                
+              } 
+            });
+            
           }            
         } else {
           console.log('No hay datos para mostrar para este etl ');
@@ -391,10 +367,30 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
                   </div>`;
     }
       
+
+    function processNullSelections() {
+      dbConnection(this)
+      // Selecciona todas las filas de la tabla
+      const rows = document.querySelectorAll('tr');
     
+      rows.forEach(row => {
+        const selectElement = row.querySelector('.operation-select');     // Encuentra el <select> dentro de la fila
+        
+        
+        if (selectElement && selectElement.value === 'null') {            // Verifica si el valor seleccionado es 'null'
+          const columnName = row.querySelector('td').textContent.trim();  // Captura el nombre de la columna
+          const selectedOperation = 'null';                               // Valor seleccionado
+  
+          updateETLConversion(columnName, selectedOperation);            // Llama a la función con el nombre de la columna y la operación 'null'
+          
+          console.log(`Columna "${columnName}" procesada con operación "${selectedOperation}"`);
+        }
+      });
+    }
+
 
     //funcion para obtenr la acccion a realizar segun lo seleccinado para camda campo de una tabla propie de u etl 
-    function generateSQLQuery(columnName,selectedCampo2  , selectedOperation) {
+    function generateSQLQuery(columnName,selectedCampo2  , tableName , selectedOperation) {
     let query = '';
     campoName = columnName;
 
@@ -438,7 +434,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
 
 
     // Función para actualizar el ETL con el atributo de conversión
-    function updateETLConversion(columnName,   selectedOperation,  selectedCampo2) {
+    function updateETLConversion(columnName,   selectedOperation ) {
         const currentControlBlock = getCurrentControlBlock();                        // Recupera el bloque actual
       
         if (currentControlBlock && currentControlBlock.etls) {
@@ -446,13 +442,16 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
           const etlObject = JSON.parse(divETLPadreId);                               // Convierte la cadena JSON a objeto
           const etlID = etlObject.etlID;                                             // Accede al valor de la propiedad etlID
 
-          //console.log(etlID);                                                        // Muestra el resultado del id del etl
+          console.log(etlID);                                                        // Muestra el resultado del id del etl
           
                                                                                       
           currentControlBlock.etls = currentControlBlock.etls.map(etl => {            // Actualizar el ETL específico
             if (etl.etlID === etlID) {
-              const tableName = etl.connectionParams?.table || 'undefined_table';     // Nombre de la tabla directo del ET            
-              const query = generateSQLQuery(columnName, selectedCampo2, selectedOperation); // Generar la consulta SQL usando la operación seleccionada
+              const tableName = etl.connectionParams?.table || 'undefined_table';     // Nombre de la tabla directo del ETL
+              let selectedCampo2 = localStorage.getItem('selectedCampo2') ;
+              console.log('este es el campo de m',selectedCampo2);
+              
+              const query = generateSQLQuery(columnName, selectedCampo2, tableName, selectedOperation); // Generar la consulta SQL usando la operación seleccionada
       
               const updatedConversion = {                                              // Crear o actualizar la estructura 'conversion'
                 nombre_tabla: tableName,
@@ -471,19 +470,19 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
             }
             return etl;                                                                // Si no coincide, devolver sin cambios
           });
-         // console.log('Antes de actualizar:', currentControlBlock);
+          console.log('Antes de actualizar:', currentControlBlock);
           let controlBlocks = JSON.parse(localStorage.getItem('controlBlocks')) || [];
           controlBlocks = controlBlocks.map(block => 
             block.id === currentControlBlock.id ? currentControlBlock : block
           );
 
           localStorage.setItem('controlBlocks', JSON.stringify(controlBlocks));         // Guardar el controlBlock actualizado en localStorage
-          //console.log('ETL actualizado con la conversión:', currentControlBlock);
+          console.log('ETL actualizado con la conversión:', currentControlBlock);
         } else {
           console.error('No se encontró el bloque actual o no tiene ETLs.');
         }
     }
-/*
+
     function processMissingConversions() {
         const currentControlBlock = getCurrentControlBlock();                        // Recupera el bloque actual
         if (!currentControlBlock || !currentControlBlock.etls) {
@@ -522,7 +521,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
       
 
       
-    }*/
+    }
   }
 
   
@@ -530,7 +529,7 @@ function setModalHtmlContent(typeOfBlockDraggedId) {
 
 
 //modal para selecciona el otro campo con el que se va ha concatenar 
-function generateModalConcat( sourceData, columnName, selectedOperation) {
+function generateModalConcat(columnData, sourceData) {
   let existingModal = document.getElementById('myModal');
   if (existingModal) {
     existingModal.remove();
@@ -568,7 +567,7 @@ function generateModalConcat( sourceData, columnName, selectedOperation) {
       let selectedCampo2 = this.value;                                                       // Captura el valor seleccionado en el select
       localStorage.setItem('selectedCampo2', selectedCampo2);                                // se Guarda en localStorage
      console.log('Segundo campo seleccionado:', selectedCampo2);
-     updateETLConversion(columnName,   selectedOperation,  selectedCampo2);
+     
    });
  } else {
    console.error('El select no está disponible para agregar el evento.');
@@ -624,7 +623,7 @@ function getOperationOptions(dataType) {
       <option value="getTime">Get Time</option>
       <option value="concat">Concatenate</option>
     `;
-  } else if (dataType.includes('int') || dataType.includes('float')|| dataType.includes('decimal')) {
+  } else if (dataType.includes('int') || dataType.includes('float')) {
     
     return `
       <option value="null"> -------- </option>
@@ -914,19 +913,26 @@ async function connectToDestination() {
     return;
   }
 
+  const destinationParams = {
+    user: userName,
+    password: password,
+    server: serverName,
+    dataBase: dbName,
+  }
+
   try {
     const response = await fetch("/tableNames", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user: userName,
-        password: password,
-        server: serverName,
-        dataBase: dbName,
-      }),
+      body: JSON.stringify(destinationParams),
     });
+
+
+
+    if (window.localStorage.getItem('destinationParams') == null)
+      window.localStorage.setItem('destinationParams', JSON.stringify(destinationParams))
 
     const result = await response.json();
 
@@ -1018,3 +1024,5 @@ function saveDestinationConfig() {
   toggleModal();
   alert("Configuración de destino guardada correctamente.");
 }
+
+
