@@ -27,11 +27,13 @@ export class Run {
           let connectionPool = pool;
 
           const destination = etl.destination; // destination query: select genero as genero from candidatos
+          const finalQuery = `SELECT DISTINCT TOP (5) ${destination.query.slice(6)};`;          
           const result = await connectionPool
             .request()
-            .query(destination.query);
+            .query(finalQuery);
           const dataToInsert = result.recordset;
           // insert data into table
+          pool.close();
           pool = await connect(
             etl.destination.connection.userName,
             etl.destination.connection.password,
@@ -47,13 +49,27 @@ export class Run {
             const valuesToInsert = []; // after for each: [carlos, flores, 20]
             columns.forEach((column) => {
               const value = record[column];
-              valuesToInsert.push(value);
+              if (typeof value === "string"){
+                //cleaning
+                const stringValue = String(value).trim();
+                const cleanValue = stringValue.replace(/'/g, '');
+                valuesToInsert.push(`'${cleanValue}'`);
+              }else{
+                value === null ? valuesToInsert.push(0):valuesToInsert.push(value);
+              }
+              // valuesToInsert.push(value);
             });
             const finalValues = valuesToInsert.join(); // carlos,flores,20
-
-            const query = `insert into ${etl.destination.destinoTable} (${fields}) values (${finalValues})`;
+            var query = "";
+            if (etl.destination.destinoTable==="Hechos_Respuestas"){
+              query = `INSERT INTO ${etl.destination.destinoTable} (ID_Estado,ID_Candidato,ID_Encuesta,ID_Patrocinador,Respuestas)  values (${finalValues});`
+            }else{
+              query = `insert into ${etl.destination.destinoTable} (${fields}) values (${finalValues});`;
+            }
             // insert data
+            console.log(query);
             await connectionPool.request().query(query);
+            pool.close();
           });
         });
       });

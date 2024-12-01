@@ -1016,7 +1016,7 @@ function saveDestinationConfig() {
     query = `SELECT ${cleanQueries.join(", ")} FROM ${currentETL.connectionParams.table}`;
 
   }else{
-    query = currentETL.connectionParams.sqlCommand;
+    query = currentETL.connectionParams.sqlCommand.replace(/\n/g, ' ');
   }
 
   const destinationConfig = {
