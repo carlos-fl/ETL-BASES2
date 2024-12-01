@@ -6,12 +6,15 @@ export async function connect (user,password,server,dataBase){
         password: password,
         database: dataBase,
         server: server,
+        //60000
         pool: {
             max: 10,
             min: 0,
-            idleTimeoutMillis: 30000
+            idleTimeoutMillis: 100000
+            //30000
         },
         options: {
+            requestTimeout: 1000000,
             encrypt: false,
             trustServerCertificate: true 
         }
