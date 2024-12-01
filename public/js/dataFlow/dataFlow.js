@@ -47,6 +47,7 @@ async function dbConnection() {
     ); // obtiene el objeto de controlFLow
     // iterar a traves de conFlowInfo y verificar si la propiedad id === a localStorage.getItem('controlBlockId')
     let currentControlBlockId = window.localStorage.getItem("controlBlockId");
+
     for (let object of controlFlowInfo) {
       if (object.id === currentControlBlockId) {
         object.etls.push(ETLObject);
@@ -912,19 +913,26 @@ async function connectToDestination() {
     return;
   }
 
+  const destinationParams = {
+    user: userName,
+    password: password,
+    server: serverName,
+    dataBase: dbName,
+  }
+
   try {
     const response = await fetch("/tableNames", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        user: userName,
-        password: password,
-        server: serverName,
-        dataBase: dbName,
-      }),
+      body: JSON.stringify(destinationParams),
     });
+
+
+
+    if (window.localStorage.getItem('destinationParams') == null)
+      window.localStorage.setItem('destinationParams', JSON.stringify(destinationParams))
 
     const result = await response.json();
 
