@@ -24,9 +24,12 @@ export class Run {
           let pool = await connect(etl.connectionParams.user ,etl.connectionParams.password ,etl.connectionParams.server, etl.connectionParams.dataBase);
           let connectionPool = pool;
 
+
           const destination = etl.destination
           const result = await connectionPool.request().query(destination.query)
           const dataToInsert = result.recordset
+          console.log(dataToInsert);
+          pool.close();
           // insert data into table
           pool = await connect(etl.destination.connection.userName, etl.destination.connection.password, etl.destination.connection.serverName, etl.destination.connection.dbName)
           connectionPool = pool
@@ -38,17 +41,25 @@ export class Run {
             const valuesToInsert = [] // after for each: [carlos, flores, 20]
             columns.forEach(column => {
               const value = record[column]
-              valuesToInsert.push(value)
+              if (typeof value === "string"){
+                //cleaning
+                const stringValue = String(value).trim();
+                const cleanValue = stringValue.replace(/'/g, '');
+                valuesToInsert.push(`'${cleanValue}'`);
+              }else{
+                value === null ? valuesToInsert.push(0):valuesToInsert.push(value);
+              }
             })
             const finalValues = valuesToInsert.join() // carlos,flores,20
 
-            const query = `insert into ${etl.destination.destinoTable} (${fields}) values (${finalValues})`
+            const query = `insert into ${etl.destination.destinoTable} (${fields}) values (${finalValues});`
+            console.log(query);
             // insert data
             await connectionPool.request().query(query)
           })
         })
       })
-      res.status(200).json({ msg: 'succes' })
+      res.status(200).json({ msg: 'succes', status: 200 })
     } catch(err) {
       console.log(err)
     }
