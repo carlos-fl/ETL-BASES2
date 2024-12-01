@@ -28,14 +28,15 @@ export class Run {
 
 
           const destination = etl.destination
-          const result = await connectionPool.request().query(destination.query)
+          const query = `SELECT TOP (500) ${destination.query.slice(6)}`;
+          const result = await connectionPool.request().query(query);
           const dataToInsert = result.recordset
           console.log(dataToInsert);
           pool.close();
           // insert data into table
           pool = await connect(etl.destination.connection.userName, etl.destination.connection.password, etl.destination.connection.serverName, etl.destination.connection.dbName)
           connectionPool = pool
-
+//query:"SELECT ID_ENCUESTA AS ID_Ciclo, CICLO AS anio FROM ENCUESTAS"
           dataToInsert.forEach(async (record) => {
             // record example: {nombre: 'carlos', apellido: 'flores', edad: 20}
             const columns = Object.keys(record) // [nombre, apellido, edad]
