@@ -1011,8 +1011,13 @@ function saveDestinationConfig() {
 
   // quita el undefined
   const cleanQueries = queries.filter(query => query != undefined) 
+  var query = '';
+  if (currentETL.connectionParams.table){
+    query = `SELECT ${cleanQueries.join(", ")} FROM ${currentETL.connectionParams.table}`;
 
-  const query = `SELECT ${cleanQueries.join(", ")} FROM ${currentETL.connectionParams.table}`;
+  }else{
+    query = currentETL.connectionParams.sqlCommand;
+  }
 
   const destinationConfig = {
     etlID: currentETL.etlID,

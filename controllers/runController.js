@@ -27,19 +27,6 @@ export class Run {
           let connectionPool = pool;
 
           const destination = etl.destination; // destination query: select genero as genero from candidatos
-          // get data in origin database
-          //SELECT o.* FROM origin o WHERE o.id NOT IN (SELECT d.id FROM destination d);
-          const idOrigin = Object.keys(etl.source).find((key) =>
-            key.includes("ID")
-          );
-          // get id in destination table
-          const queryToGetPrimaryKeyInDestinationTable = `SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1
-  AND TABLE_NAME = '${etl.destination.destinoTable}'`;
-          const destinationPrimaryKeyObj = await connectionPool.request().query(queryToGetPrimaryKeyInDestinationTable)[0];
-          const destinationPrimaryKey = Object.keys(destinationPrimaryKeyObj)[0]
-          const queryToGetRecordsWithNoDuplicates = `WHERE ${idOrigin} NOT IN (SELECT ${destinationPrimaryKey} from ${etl.destination.destinoTable})`;
           const result = await connectionPool
             .request()
             .query(destination.query);
