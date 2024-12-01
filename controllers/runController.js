@@ -17,12 +17,14 @@ export class Run {
   
       
      
-      orderedControlBlocks.forEach(block => {
+      orderedControlBlocks.forEach(async (block) => {
         const etls = block.etls
+        let connectionPool
+        let queryToInsertData = ''
         etls.forEach(async (etl) => {
           // connection to database
           let pool = await connect(etl.connectionParams.user ,etl.connectionParams.password ,etl.connectionParams.server, etl.connectionParams.dataBase);
-          let connectionPool = pool;
+          connectionPool = pool;
 
 
           const destination = etl.destination
@@ -54,14 +56,16 @@ export class Run {
 
             const query = `insert into ${etl.destination.destinoTable} (${fields}) values (${finalValues});`
             console.log(query);
-            // insert data
-            await connectionPool.request().query(query)
+            queryToInsertData = query + queryToInsertData + ','
           })
+          
         })
+        // insert data
+        console.log('MY query', queryToInsertData)
       })
       res.status(200).json({ msg: 'succes', status: 200 })
     } catch(err) {
-      console.log(err)
+      console.log('error', err)
     }
   } 
 }
