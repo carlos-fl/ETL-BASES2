@@ -98,9 +98,9 @@ async function checkSelectValue() {
     console.log("sqlCommand value!");
   }
 
+  let queryResult;
   if (this.value === "table") {
-    const queryResult = await extractTableNames();
-
+    queryResult = await extractTableNames()
     console.log(queryResult);
     for (let table of queryResult.recordset) {
       let tableOption = document.createElement("option");
