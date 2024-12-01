@@ -1010,10 +1010,9 @@ function saveDestinationConfig() {
   console.log(helper);
 
   // quita el undefined
-  const index = queries.indexOf(undefined)
-  queries.splice(index, 1)
+  const cleanQueries = queries.filter(query => query != undefined) 
 
-  const query = `SELECT ${queries.join(", ")} FROM ${currentETL.connectionParams.table}`;
+  const query = `SELECT ${cleanQueries.join(", ")} FROM ${currentETL.connectionParams.table}`;
 
   const destinationConfig = {
     etlID: currentETL.etlID,
