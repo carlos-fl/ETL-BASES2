@@ -995,17 +995,23 @@ function saveDestinationConfig() {
   const helper = [];
   columnMappings.forEach((row, index) => {
     const conversionKey = sourceSelects[index].firstChild.value;
-    const sourceColumn = conversion[conversionKey].accion;
+    let sourceColumn
+    if (conversionKey != 'ignorar')
+      sourceColumn = conversion[conversionKey].accion;
     const destinationColumn = row.querySelector(".destination-column").innerText;
     helper.push({ sourceColumn: sourceColumn, destinationColumn:destinationColumn });
   })
   
 
   const queries = helper.map((mapping) => {
-    return `${mapping.sourceColumn} AS ${mapping.destinationColumn}`;
+    if (mapping.sourceColumn != undefined)
+      return `${mapping.sourceColumn} AS ${mapping.destinationColumn}`;
   });
   console.log(helper);
-  
+
+  // quita el undefined
+  const index = queries.indexOf(undefined)
+  queries.splice(index, 1)
 
   const query = `SELECT ${queries.join(", ")} FROM ${currentETL.connectionParams.table}`;
 
