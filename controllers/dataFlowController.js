@@ -18,6 +18,34 @@ export class DataFlow {
         });
         return formattedData;
     }
+    static cleanAndWrapInQuotes(columns) {
+        return columns.map((col) => `'${col.replace(/'/g, "")}'`);
+    }
+
+    static cleanColumnName = (col) => {
+        // Quitar el alias si existe (parte después de 'AS')
+        const aliasSplit = col.split(' AS ');
+        let withoutAlias = aliasSplit[0];
+    
+        // Verificar si es una función agregada (como COUNT, SUM, AVG, etc.)
+        if (withoutAlias.includes('COUNT') || withoutAlias.includes('SUM') || withoutAlias.includes('AVG')) {
+            // Eliminar el prefijo de la tabla dentro de la función agregada
+            const openParenIndex = withoutAlias.indexOf('(');
+            const closeParenIndex = withoutAlias.indexOf(')');
+            
+            if (openParenIndex !== -1 && closeParenIndex !== -1) {
+                let innerExpression = withoutAlias.slice(openParenIndex + 1, closeParenIndex);
+                // Quitar el prefijo de tabla si existe en el interior de la función
+                innerExpression = innerExpression.replace(/^.*\./, '');  // Eliminar cualquier prefijo de tabla
+                return `${innerExpression}`;
+            }
+        }
+        
+        // Si no es una función agregada, quitar el prefijo de la tabla
+        let dotIndex = withoutAlias.indexOf('.');
+        return dotIndex !== -1 ? withoutAlias.slice(dotIndex + 1) : withoutAlias;
+    };
+    
 
 
     static async getTableMetadata(tableName){
@@ -37,9 +65,11 @@ export class DataFlow {
             let source = { };
             for (let table in columnTableMappings){
                 if (columnTableMappings[table].length > 0){
+                    let cleanColumns =  columnTableMappings[table].map((col) => `${this.cleanColumnName(col)}'`);
+                    let quotationCols = this.cleanAndWrapInQuotes(cleanColumns);
                     let result = await connectionPool.request().query(`SELECT COLUMN_NAME AS columnName,
                         DATA_TYPE AS dataType, CHARACTER_MAXIMUM_LENGTH AS length, NUMERIC_PRECISION AS precision 
-                        FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${table}' AND COLUMN_NAME IN (${columnTableMappings[table].join(",")});`);
+                        FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='${table}' AND COLUMN_NAME IN (${quotationCols.join(",")});`);
                     let formatedData = this.format_metadata(result.recordset);
                     source = { ...source, ...JSON.parse(JSON.stringify(formatedData.source)) };
                 }
@@ -57,8 +87,9 @@ export class DataFlow {
             joinedTables: []
         };
         // const fieldsRegex = /SELECT\s+(.*?)\s+FROM/i;
+        const replacedText = sqlCommand.replace(/\n/g, ' ');
         const fieldsRegex = /SELECT.*FROM/gi;
-        const fieldsMatch = sqlCommand.match(fieldsRegex);
+        const fieldsMatch = replacedText.match(fieldsRegex);
         if (fieldsMatch && fieldsMatch[0]){
             // remove SELECT and FROM
             const fieldArray = fieldsMatch[0].slice(7,-5);
@@ -117,18 +148,24 @@ export class DataFlow {
             // Parsear el comando SQL para obtener información de tablas y columnas
             const queryTables = DataFlow.parseSQLQuery(sqlCommand);
       
-            // Mapear las tablas y columnas extraídas del comando SQL
-            const columnTableMappings = {
-              [queryTables.tableName] : queryTables.fields
-                .filter((columnName) => columnName.includes(`${queryTables.tableName}.`))
-                .map((fieldName) => `'${fieldName.slice(fieldName.indexOf(".") + 1)}'`),
-            };
+            let  columnTableMappings = { };
+            columnTableMappings[queryTables.tableName] = queryTables.fields
+            .filter ((columnName) =>  columnName.includes(`${queryTables.tableName}.`))
+            .map ((fieldName) =>  `'${fieldName.slice(fieldName.indexOf(".")+1)}'` )
       
             queryTables.joinedTables.forEach((table) => {
               columnTableMappings[table] = queryTables.fields
                 .filter((columnName) => columnName.includes(`${table}.`))
-                .map((fieldName) => `'${fieldName.slice(fieldName.indexOf(".") + 1)}'`);
-            });
+                .map((fieldName) => {
+                    const isAggregateFunction = /COUNT|SUM|AVG|/i.test(fieldName);
+                    if (isAggregateFunction) {
+                        return `'${fieldName}'`; // Mantener la función completa
+                    }
+                    // Procesar normalmente si no es función
+                    const columnName = fieldName.slice(fieldName.indexOf(".") + 1);
+                    return `'${columnName}'`;
+                        });
+                    });
       
             // Obtener metadatos de todas las tablas relacionadas
             const queryResult = {

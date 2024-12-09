@@ -7,4 +7,3 @@ dataFlowRouter.get('/dataFlow', DataFlow.redirectToBoard);
 dataFlowRouter.post('/connect', DataFlow.connection);
 dataFlowRouter.post('/tableNames', DataFlow.getTableNames);
 dataFlowRouter.post('/destTableMetadata', DataFlow.getDestinationMetadata);
-
